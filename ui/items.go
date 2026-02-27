@@ -236,11 +236,9 @@ func (m Model) viewItems() string {
 	} else {
 		visible := m.visibleRows()
 		end := min(m.itemScroll+visible, len(m.flat))
+		var lines []string
 		for i := m.itemScroll; i < end; i++ {
 			fi := m.flat[i]
-			if i > m.itemScroll {
-				items.WriteString("\n")
-			}
 			selected := i == m.itemCursor
 
 			cursor := "  "
@@ -267,8 +265,17 @@ func (m Model) viewItems() string {
 			if selected {
 				line = styleSelected.Render(line)
 			}
-			items.WriteString(line)
+			lines = append(lines, line)
 		}
+		// Pad to exactly `visible` rows so the panel height stays stable.
+		for len(lines) < visible {
+			lines = append(lines, "")
+		}
+		if total := len(m.flat); total > visible {
+			si := computeScroll(m.itemScroll, total, visible)
+			lines = renderScrollbar(lines, si, m.panelWidth())
+		}
+		items.WriteString(strings.Join(lines, "\n"))
 	}
 
 	panel := stylePanel.Width(m.panelWidth()).Render(items.String())

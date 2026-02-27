@@ -2,6 +2,8 @@
 
 A TUI todo app. Lists are stored as Markdown files with GFM checkboxes, so they work in any editor.
 
+![notch screenshot](images/example.png)
+
 ## Install
 
 ```sh

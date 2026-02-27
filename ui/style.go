@@ -28,8 +28,11 @@ var (
 	styleCount     = lipgloss.NewStyle().Foreground(colorMuted)
 	styleHelpKey   = lipgloss.NewStyle().Foreground(colorAccent)
 	styleHelpDesc  = lipgloss.NewStyle().Foreground(colorMuted)
-	styleDepthDot  = lipgloss.NewStyle().Foreground(colorSeparator)
-	stylePanel     = lipgloss.NewStyle().
+	styleDepthDot    = lipgloss.NewStyle().Foreground(colorSeparator)
+	styleScrollThumb = lipgloss.NewStyle().Foreground(colorMuted)
+	styleScrollTrack = lipgloss.NewStyle().Foreground(colorSeparator)
+	styleScrollArrow = lipgloss.NewStyle().Foreground(colorMuted)
+	stylePanel       = lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
 			BorderForeground(colorBorder).
 			Padding(0, 1)

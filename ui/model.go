@@ -2,6 +2,7 @@ package ui
 
 import (
 	"notch/todo"
+	"strings"
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/bubbles/v2/textinput"
@@ -178,6 +179,61 @@ func (m Model) View() tea.View {
 	v.AltScreen = true
 	v.MouseMode = tea.MouseModeCellMotion
 	return v
+}
+
+// scrollInfo describes the scroll state for a panel.
+type scrollInfo struct {
+	showUp, showDown   bool
+	thumbStart, thumbEnd int // row indices within visible window
+}
+
+// computeScroll calculates scroll indicators and scrollbar thumb position.
+func computeScroll(scroll, total, visible int) scrollInfo {
+	si := scrollInfo{
+		showUp:   scroll > 0,
+		showDown: scroll+visible < total,
+	}
+	thumbSize := max(visible*visible/total, 1)
+	si.thumbStart = scroll * visible / total
+	si.thumbEnd = si.thumbStart + thumbSize
+	return si
+}
+
+// renderScrollbar adds arrow indicators and a left-side scrollbar to content lines.
+// lines must have exactly `visible` entries. panelWidth is used to center arrows.
+func renderScrollbar(lines []string, si scrollInfo, panelWidth int) []string {
+	if !si.showUp && !si.showDown {
+		return lines // no overflow, no track
+	}
+
+	if si.showUp {
+		arrow := styleScrollArrow.Render("▲")
+		pad := (panelWidth - 1) / 2 // rough center
+		if pad < 0 {
+			pad = 0
+		}
+		lines[0] = strings.Repeat(" ", pad) + arrow
+	}
+	if si.showDown && len(lines) > 0 {
+		arrow := styleScrollArrow.Render("▼")
+		pad := (panelWidth - 1) / 2
+		if pad < 0 {
+			pad = 0
+		}
+		lines[len(lines)-1] = strings.Repeat(" ", pad) + arrow
+	}
+
+	out := make([]string, len(lines))
+	for i, line := range lines {
+		var ch string
+		if i >= si.thumbStart && i < si.thumbEnd {
+			ch = styleScrollThumb.Render("█")
+		} else {
+			ch = styleScrollTrack.Render("│")
+		}
+		out[i] = ch + line
+	}
+	return out
 }
 
 // Messages

@@ -65,17 +65,26 @@ func (m Model) viewListPicker() string {
 	} else {
 		visible := m.visibleRows()
 		end := min(m.listScroll+visible, len(m.lists))
+		var lines []string
 		for i := m.listScroll; i < end; i++ {
-			if i > m.listScroll {
-				items.WriteString("\n")
-			}
 			name := m.lists[i]
+			var line string
 			if i == m.listCursor {
-				items.WriteString(styleCursor.Render("› ") + styleSelected.Render(name))
+				line = styleCursor.Render("› ") + styleSelected.Render(name)
 			} else {
-				items.WriteString("  " + name)
+				line = "  " + name
 			}
+			lines = append(lines, line)
 		}
+		// Pad to exactly `visible` rows so the panel height stays stable.
+		for len(lines) < visible {
+			lines = append(lines, "")
+		}
+		if total := len(m.lists); total > visible {
+			si := computeScroll(m.listScroll, total, visible)
+			lines = renderScrollbar(lines, si, m.panelWidth())
+		}
+		items.WriteString(strings.Join(lines, "\n"))
 	}
 
 	panel := stylePanel.Width(m.panelWidth()).Render(items.String())
