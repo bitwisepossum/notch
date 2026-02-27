@@ -3,16 +3,31 @@ package todo
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 )
 
 // DataDir returns the storage directory for notch lists, creating it if needed.
+//
+// On Linux:   ~/.local/share/notch
+// On macOS:   ~/Library/Application Support/notch
+// On Windows: %APPDATA%\notch
 func DataDir() (string, error) {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return "", err
+	var dir string
+	switch runtime.GOOS {
+	case "linux":
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return "", err
+		}
+		dir = filepath.Join(home, ".local", "share", "notch")
+	default:
+		configDir, err := os.UserConfigDir()
+		if err != nil {
+			return "", err
+		}
+		dir = filepath.Join(configDir, "notch")
 	}
-	dir := filepath.Join(home, ".local", "share", "notch")
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return "", err
 	}
