@@ -11,13 +11,13 @@ func (m Model) updateListPicker(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.MouseClickMsg:
 		if msg.Button == tea.MouseLeft && len(m.lists) > 0 {
-			row := msg.Y - headerLines
-			if row >= 0 && row < len(m.lists) {
-				if row == m.listCursor {
+			idx := m.listScroll + (msg.Y - headerLines)
+			if idx >= 0 && idx < len(m.lists) {
+				if idx == m.listCursor {
 					// Click on already-selected row → open
 					return m, m.openList(m.lists[m.listCursor])
 				}
-				m.listCursor = row
+				m.listCursor = idx
 			}
 		}
 	case tea.KeyPressMsg:
@@ -53,6 +53,7 @@ func (m Model) updateListPicker(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		}
 	}
+	m.listScroll = clampScroll(m.listCursor, m.listScroll, m.visibleRows())
 	return m, nil
 }
 
@@ -62,10 +63,13 @@ func (m Model) viewListPicker() string {
 	if len(m.lists) == 0 {
 		items.WriteString(styleEmpty.Render("No lists yet. Press n to create one."))
 	} else {
-		for i, name := range m.lists {
-			if i > 0 {
+		visible := m.visibleRows()
+		end := min(m.listScroll+visible, len(m.lists))
+		for i := m.listScroll; i < end; i++ {
+			if i > m.listScroll {
 				items.WriteString("\n")
 			}
+			name := m.lists[i]
 			if i == m.listCursor {
 				items.WriteString(styleCursor.Render("› ") + styleSelected.Render(name))
 			} else {

@@ -36,15 +36,15 @@ func (m Model) updateItems(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.MouseClickMsg:
 		if msg.Button == tea.MouseLeft && len(m.flat) > 0 {
-			row := msg.Y - headerLines
-			if row >= 0 && row < len(m.flat) {
-				if row == m.itemCursor {
+			idx := m.itemScroll + (msg.Y - headerLines)
+			if idx >= 0 && idx < len(m.flat) {
+				if idx == m.itemCursor {
 					// Click on already-selected row → toggle
 					_ = m.list.Toggle(m.flat[m.itemCursor].path)
 					m.save()
 					m.rebuildFlat()
 				} else {
-					m.itemCursor = row
+					m.itemCursor = idx
 				}
 			}
 		}
@@ -114,6 +114,7 @@ func (m Model) updateItems(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.outdentItem()
 		}
 	}
+	m.itemScroll = clampScroll(m.itemCursor, m.itemScroll, m.visibleRows())
 	return m, nil
 }
 
@@ -233,8 +234,11 @@ func (m Model) viewItems() string {
 	if len(m.flat) == 0 {
 		items.WriteString(styleEmpty.Render("Empty list. Press a to add an item."))
 	} else {
-		for i, fi := range m.flat {
-			if i > 0 {
+		visible := m.visibleRows()
+		end := min(m.itemScroll+visible, len(m.flat))
+		for i := m.itemScroll; i < end; i++ {
+			fi := m.flat[i]
+			if i > m.itemScroll {
 				items.WriteString("\n")
 			}
 			selected := i == m.itemCursor

@@ -46,11 +46,13 @@ type Model struct {
 	// List picker state
 	lists      []string
 	listCursor int
+	listScroll int
 
 	// Items browser state
-	list      *todo.List
-	flat      []flatItem
+	list       *todo.List
+	flat       []flatItem
 	itemCursor int
+	itemScroll int
 
 	// Text input
 	textInput textinput.Model
@@ -101,6 +103,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.list = msg.list
 		m.mode = modeItems
 		m.itemCursor = 0
+		m.itemScroll = 0
 		m.rebuildFlat()
 		return m, nil
 
@@ -127,6 +130,22 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 // headerLines is the number of rendered lines before the first content row
 // in the panel: frame top padding (1) + title line (1) + panel border top (1).
 const headerLines = 3
+
+// visibleRows returns how many content rows fit in the panel.
+func (m Model) visibleRows() int {
+	return max(m.height-7, 1)
+}
+
+// clampScroll adjusts scroll so that cursor is within the visible window.
+func clampScroll(cursor, scroll, visible int) int {
+	if cursor < scroll {
+		scroll = cursor
+	}
+	if cursor >= scroll+visible {
+		scroll = cursor - visible + 1
+	}
+	return scroll
+}
 
 // panelWidth returns the inner width for the content panel.
 func (m Model) panelWidth() int {
