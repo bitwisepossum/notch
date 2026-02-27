@@ -67,7 +67,11 @@ func (m Model) updateItems(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.itemCursor > 0 {
 				m.itemCursor--
 			}
-		case " ", "enter":
+		case "pgdown", "shift+down":
+			m.itemCursor = min(m.itemCursor+m.halfPage(), len(m.flat)-1)
+		case "pgup", "shift+up":
+			m.itemCursor = max(m.itemCursor-m.halfPage(), 0)
+		case "space", "enter":
 			if len(m.flat) > 0 {
 				_ = m.list.Toggle(m.flat[m.itemCursor].path)
 				m.save()

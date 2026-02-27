@@ -137,6 +137,11 @@ func (m Model) visibleRows() int {
 	return max(m.height-7, 1)
 }
 
+// halfPage returns the half-page jump distance.
+func (m Model) halfPage() int {
+	return max(m.visibleRows()/2, 1)
+}
+
 // clampScroll adjusts scroll so that cursor is within the visible window.
 func clampScroll(cursor, scroll, visible int) int {
 	if cursor < scroll {

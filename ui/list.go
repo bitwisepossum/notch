@@ -33,6 +33,10 @@ func (m Model) updateListPicker(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.listCursor > 0 {
 				m.listCursor--
 			}
+		case "pgdown", "shift+down":
+			m.listCursor = min(m.listCursor+m.halfPage(), len(m.lists)-1)
+		case "pgup", "shift+up":
+			m.listCursor = max(m.listCursor-m.halfPage(), 0)
 		case "enter":
 			if len(m.lists) > 0 {
 				return m, m.openList(m.lists[m.listCursor])
