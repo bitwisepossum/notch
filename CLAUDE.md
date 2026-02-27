@@ -8,7 +8,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Storage Format
 
-Todo lists are stored as Markdown files in `~/.local/share/notch/`. Each file is one list, with the filename as the list name.
+Todo lists are stored as Markdown files. Each file is one list, with the filename as the list name. Platform-native data directories:
+
+- Linux: `~/.local/share/notch/`
+- macOS: `~/Library/Application Support/notch/`
+- Windows: `%APPDATA%\notch\`
 
 Todos use GFM checkbox syntax. Hierarchy is expressed via 2-space indentation:
 
@@ -35,3 +39,9 @@ go test ./...        # run all tests
 go test ./pkg/...    # run tests in a specific package
 go vet ./...         # lint
 ```
+
+## Commit Style
+
+- Short, imperative subject line (e.g. "Fix cursor reset on delete")
+- No unnecessary detail — KISS
+- No mentions of tooling, themes, or implementation flavor in the subject
