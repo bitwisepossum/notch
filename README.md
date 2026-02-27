@@ -16,7 +16,9 @@ go install github.com/bitwisepossum/notch@latest
 notch
 ```
 
-Keybindings: `j/k` navigate, `enter/space` toggle, `a` add, `e` edit, `d` delete, `q` quit.
+**List picker:** `j/k` / `↑/↓` move · `PgDn/PgUp` / `Shift+↑/↓` jump · `enter` open · `n` new · `d` delete · `q` quit
+
+**Items:** `j/k` / `↑/↓` move · `PgDn/PgUp` / `Shift+↑/↓` jump · `space`/`enter` toggle · `a` add · `A` add child · `e` edit · `d` delete · `J/K` reorder · `tab`/`Shift+tab` indent/outdent · `esc` back · `q` quit
 
 ## Storage
 
