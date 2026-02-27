@@ -150,7 +150,7 @@ func clampScroll(cursor, scroll, visible int) int {
 
 // panelWidth returns the inner width for the content panel.
 func (m Model) panelWidth() int {
-	return max(m.width-8, 30)
+	return max(m.width-26, 30)
 }
 
 func (m Model) View() tea.View {

@@ -7,6 +7,7 @@ import (
 	"notch/todo"
 
 	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
 // flatItem is one row in the flattened tree view.
@@ -279,12 +280,12 @@ func (m Model) viewItems() string {
 	}
 
 	panel := stylePanel.Width(m.panelWidth()).Render(items.String())
+	help := lipgloss.NewStyle().PaddingTop(1).PaddingLeft(2).Render(renderHelp(itemsHelp))
 
 	var b strings.Builder
 	title := styleTitle.Render(strings.ToUpper(m.list.Name))
 	count := styleCount.Render(fmt.Sprintf("  (%d)", len(m.flat)))
 	b.WriteString(title + count + "\n")
-	b.WriteString(panel + "\n\n")
-	b.WriteString(renderHelp(itemsHelp))
+	b.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, panel, help))
 	return b.String()
 }

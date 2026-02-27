@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
 func (m Model) updateListPicker(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -88,12 +89,12 @@ func (m Model) viewListPicker() string {
 	}
 
 	panel := stylePanel.Width(m.panelWidth()).Render(items.String())
+	help := lipgloss.NewStyle().PaddingTop(1).PaddingLeft(2).Render(renderHelp(listHelp))
 
 	var b strings.Builder
 	title := styleTitle.Render("NOTCH")
 	count := styleCount.Render(fmt.Sprintf("  (%d)", len(m.lists)))
 	b.WriteString(title + count + "\n")
-	b.WriteString(panel + "\n\n")
-	b.WriteString(renderHelp(listHelp))
+	b.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, panel, help))
 	return b.String()
 }
