@@ -1,0 +1,158 @@
+package todo
+
+import "testing"
+
+func newTestList() *List {
+	return &List{
+		Name: "test",
+		Items: []*Item{
+			{Text: "First", Children: []*Item{
+				{Text: "Child A"},
+				{Text: "Child B", Done: true},
+			}},
+			{Text: "Second"},
+		},
+	}
+}
+
+func TestAdd_TopLevel(t *testing.T) {
+	l := &List{Name: "t"}
+	l.Add(nil, "Item 1")
+	l.Add(nil, "Item 2")
+	if len(l.Items) != 2 {
+		t.Fatalf("expected 2 items, got %d", len(l.Items))
+	}
+	if l.Items[0].Text != "Item 1" {
+		t.Errorf("expected 'Item 1', got %q", l.Items[0].Text)
+	}
+}
+
+func TestAdd_Nested(t *testing.T) {
+	l := newTestList()
+	l.Add([]int{0}, "Child C")
+	if len(l.Items[0].Children) != 3 {
+		t.Fatalf("expected 3 children, got %d", len(l.Items[0].Children))
+	}
+	if l.Items[0].Children[2].Text != "Child C" {
+		t.Errorf("expected 'Child C', got %q", l.Items[0].Children[2].Text)
+	}
+}
+
+func TestRemove(t *testing.T) {
+	l := newTestList()
+	if err := l.Remove([]int{0, 0}); err != nil {
+		t.Fatal(err)
+	}
+	if len(l.Items[0].Children) != 1 {
+		t.Fatalf("expected 1 child, got %d", len(l.Items[0].Children))
+	}
+	if l.Items[0].Children[0].Text != "Child B" {
+		t.Errorf("expected 'Child B', got %q", l.Items[0].Children[0].Text)
+	}
+}
+
+func TestRemove_TopLevel(t *testing.T) {
+	l := newTestList()
+	if err := l.Remove([]int{1}); err != nil {
+		t.Fatal(err)
+	}
+	if len(l.Items) != 1 {
+		t.Fatalf("expected 1 item, got %d", len(l.Items))
+	}
+}
+
+func TestRemove_InvalidPath(t *testing.T) {
+	l := newTestList()
+	if err := l.Remove([]int{5}); err == nil {
+		t.Fatal("expected error for out-of-range path")
+	}
+	if err := l.Remove(nil); err == nil {
+		t.Fatal("expected error for empty path")
+	}
+}
+
+func TestEdit(t *testing.T) {
+	l := newTestList()
+	if err := l.Edit([]int{0}, "Updated"); err != nil {
+		t.Fatal(err)
+	}
+	if l.Items[0].Text != "Updated" {
+		t.Errorf("expected 'Updated', got %q", l.Items[0].Text)
+	}
+}
+
+func TestEdit_InvalidPath(t *testing.T) {
+	l := newTestList()
+	if err := l.Edit([]int{9}, "x"); err == nil {
+		t.Fatal("expected error")
+	}
+}
+
+func TestToggle(t *testing.T) {
+	l := newTestList()
+	if err := l.Toggle([]int{0}); err != nil {
+		t.Fatal(err)
+	}
+	if !l.Items[0].Done {
+		t.Error("expected Done=true after toggle")
+	}
+	if err := l.Toggle([]int{0}); err != nil {
+		t.Fatal(err)
+	}
+	if l.Items[0].Done {
+		t.Error("expected Done=false after second toggle")
+	}
+}
+
+func TestToggle_AlreadyDone(t *testing.T) {
+	l := newTestList()
+	// Child B starts Done=true
+	if err := l.Toggle([]int{0, 1}); err != nil {
+		t.Fatal(err)
+	}
+	if l.Items[0].Children[1].Done {
+		t.Error("expected Done=false after toggling completed item")
+	}
+}
+
+func TestMove_Reorder(t *testing.T) {
+	l := newTestList()
+	// Move "Second" (index 1) to index 0
+	if err := l.Move([]int{1}, []int{0}); err != nil {
+		t.Fatal(err)
+	}
+	if l.Items[0].Text != "Second" {
+		t.Errorf("expected 'Second' at 0, got %q", l.Items[0].Text)
+	}
+	if l.Items[1].Text != "First" {
+		t.Errorf("expected 'First' at 1, got %q", l.Items[1].Text)
+	}
+}
+
+func TestMove_Reparent(t *testing.T) {
+	l := newTestList()
+	// Move "Second" (top-level index 1) to become child of "First" at position 0
+	if err := l.Move([]int{1}, []int{0, 0}); err != nil {
+		t.Fatal(err)
+	}
+	if len(l.Items) != 1 {
+		t.Fatalf("expected 1 top-level item, got %d", len(l.Items))
+	}
+	if l.Items[0].Children[0].Text != "Second" {
+		t.Errorf("expected 'Second' as first child, got %q", l.Items[0].Children[0].Text)
+	}
+}
+
+func TestMove_InvalidFrom(t *testing.T) {
+	l := newTestList()
+	if err := l.Move([]int{9}, []int{0}); err == nil {
+		t.Fatal("expected error for invalid from path")
+	}
+}
+
+func TestMove_EmptyTo(t *testing.T) {
+	l := newTestList()
+	if err := l.Move([]int{0}, nil); err == nil {
+		t.Fatal("expected error for empty to path")
+	}
+}

@@ -1,0 +1,86 @@
+package ui
+
+import (
+	"fmt"
+	"strings"
+
+	tea "charm.land/bubbletea/v2"
+)
+
+func (m Model) updateListPicker(msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case tea.MouseClickMsg:
+		if msg.Button == tea.MouseLeft && len(m.lists) > 0 {
+			row := msg.Y - headerLines
+			if row >= 0 && row < len(m.lists) {
+				if row == m.listCursor {
+					// Click on already-selected row → open
+					return m, m.openList(m.lists[m.listCursor])
+				}
+				m.listCursor = row
+			}
+		}
+	case tea.KeyPressMsg:
+		switch msg.String() {
+		case "q":
+			return m, tea.Quit
+		case "j", "down":
+			if m.listCursor < len(m.lists)-1 {
+				m.listCursor++
+			}
+		case "k", "up":
+			if m.listCursor > 0 {
+				m.listCursor--
+			}
+		case "enter":
+			if len(m.lists) > 0 {
+				return m, m.openList(m.lists[m.listCursor])
+			}
+		case "n":
+			m.prevMode = modeListPicker
+			m.mode = modeInput
+			m.inputAction = inputNewList
+			m.textInput.SetValue("")
+			return m, m.textInput.Focus()
+		case "d":
+			if len(m.lists) > 0 {
+				name := m.lists[m.listCursor]
+				m.prevMode = modeListPicker
+				m.mode = modeConfirm
+				m.confirmMsg = fmt.Sprintf("Delete list %q? (y/n)", name)
+				m.confirmKind = confirmDeleteList
+				m.confirmTarget = name
+			}
+		}
+	}
+	return m, nil
+}
+
+func (m Model) viewListPicker() string {
+	var items strings.Builder
+
+	if len(m.lists) == 0 {
+		items.WriteString(styleEmpty.Render("No lists yet. Press n to create one."))
+	} else {
+		for i, name := range m.lists {
+			if i > 0 {
+				items.WriteString("\n")
+			}
+			if i == m.listCursor {
+				items.WriteString(styleCursor.Render("› ") + styleSelected.Render(name))
+			} else {
+				items.WriteString("  " + name)
+			}
+		}
+	}
+
+	panel := stylePanel.Width(m.panelWidth()).Render(items.String())
+
+	var b strings.Builder
+	title := styleTitle.Render("NOTCH")
+	count := styleCount.Render(fmt.Sprintf("  (%d)", len(m.lists)))
+	b.WriteString(title + count + "\n")
+	b.WriteString(panel + "\n\n")
+	b.WriteString(renderHelp(listHelp))
+	return b.String()
+}

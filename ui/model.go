@@ -1,0 +1,199 @@
+package ui
+
+import (
+	"notch/todo"
+
+	tea "charm.land/bubbletea/v2"
+	"charm.land/bubbles/v2/textinput"
+	"charm.land/lipgloss/v2"
+)
+
+type mode int
+
+const (
+	modeListPicker mode = iota
+	modeItems
+	modeInput
+	modeConfirm
+)
+
+// inputAction tracks what the text input is being used for.
+type inputAction int
+
+const (
+	inputNewList inputAction = iota
+	inputNewSibling
+	inputNewChild
+	inputEditItem
+)
+
+// confirmAction tracks what the confirm dialog is for.
+type confirmAction int
+
+const (
+	confirmDeleteList confirmAction = iota
+	confirmDeleteItem
+)
+
+// Model is the top-level Bubble Tea model.
+type Model struct {
+	mode        mode
+	prevMode    mode // screen behind input/confirm overlay
+	width       int
+	height      int
+	inputAction inputAction
+
+	// List picker state
+	lists      []string
+	listCursor int
+
+	// Items browser state
+	list      *todo.List
+	flat      []flatItem
+	itemCursor int
+
+	// Text input
+	textInput textinput.Model
+
+	// Confirm dialog
+	confirmMsg       string
+	confirmKind      confirmAction
+	confirmTarget    string // list name for delete list
+	confirmItemPath  []int  // item path for delete item
+}
+
+// New creates a new Model with default state.
+func New() Model {
+	ti := textinput.New()
+	ti.CharLimit = 256
+
+	s := ti.Styles()
+	s.Focused.Prompt = lipgloss.NewStyle().Foreground(colorAccent)
+	s.Focused.Text = lipgloss.NewStyle().Foreground(colorPrimary)
+	s.Cursor.Color = colorAccent
+	ti.SetStyles(s)
+
+	return Model{
+		mode:      modeListPicker,
+		textInput: ti,
+	}
+}
+
+func (m Model) Init() tea.Cmd {
+	return m.loadLists
+}
+
+func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		m.width = msg.Width
+		m.height = msg.Height
+		return m, nil
+
+	case listsLoadedMsg:
+		m.lists = msg.lists
+		return m, nil
+
+	case listOpenedMsg:
+		if msg.err != nil {
+			return m, nil
+		}
+		m.list = msg.list
+		m.mode = modeItems
+		m.itemCursor = 0
+		m.rebuildFlat()
+		return m, nil
+
+	case tea.KeyPressMsg:
+		// Global quit on ctrl+c
+		if msg.String() == "ctrl+c" {
+			return m, m.saveAndQuit
+		}
+	}
+
+	switch m.mode {
+	case modeListPicker:
+		return m.updateListPicker(msg)
+	case modeItems:
+		return m.updateItems(msg)
+	case modeInput:
+		return m.updateInput(msg)
+	case modeConfirm:
+		return m.updateConfirm(msg)
+	}
+	return m, nil
+}
+
+// headerLines is the number of rendered lines before the first content row
+// in the panel: frame top padding (1) + title line (1) + panel border top (1).
+const headerLines = 3
+
+// panelWidth returns the inner width for the content panel.
+func (m Model) panelWidth() int {
+	return max(m.width-8, 30)
+}
+
+func (m Model) View() tea.View {
+	if m.width == 0 {
+		v := tea.NewView("Loading...")
+		v.AltScreen = true
+		return v
+	}
+
+	var s string
+	switch m.mode {
+	case modeListPicker:
+		s = m.viewListPicker()
+	case modeItems:
+		s = m.viewItems()
+	case modeInput:
+		s = m.viewInput()
+	case modeConfirm:
+		s = m.viewConfirm()
+	}
+
+	framed := styleFrame.Render(s)
+	content := lipgloss.Place(m.width, m.height, lipgloss.Left, lipgloss.Top, framed)
+
+	v := tea.NewView(content)
+	v.AltScreen = true
+	v.MouseMode = tea.MouseModeCellMotion
+	return v
+}
+
+// Messages
+
+type listsLoadedMsg struct {
+	lists []string
+	err   error
+}
+
+type listOpenedMsg struct {
+	list *todo.List
+	err  error
+}
+
+func (m Model) loadLists() tea.Msg {
+	names, err := todo.ListAll()
+	return listsLoadedMsg{lists: names, err: err}
+}
+
+func (m Model) openList(name string) tea.Cmd {
+	return func() tea.Msg {
+		list, err := todo.Load(name)
+		return listOpenedMsg{list: list, err: err}
+	}
+}
+
+func (m Model) saveAndQuit() tea.Msg {
+	if m.list != nil {
+		_ = todo.Save(m.list)
+	}
+	return tea.QuitMsg{}
+}
+
+func (m Model) save() {
+	if m.list != nil {
+		_ = todo.Save(m.list)
+	}
+}
