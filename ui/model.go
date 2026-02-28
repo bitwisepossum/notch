@@ -1,11 +1,12 @@
 package ui
 
 import (
-	"github.com/bitwisepossum/notch/todo"
 	"strings"
 
-	tea "charm.land/bubbletea/v2"
+	"github.com/bitwisepossum/notch/todo"
+
 	"charm.land/bubbles/v2/textinput"
+	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 )
 
@@ -59,10 +60,10 @@ type Model struct {
 	textInput textinput.Model
 
 	// Confirm dialog
-	confirmMsg       string
-	confirmKind      confirmAction
-	confirmTarget    string // list name for delete list
-	confirmItemPath  []int  // item path for delete item
+	confirmMsg      string
+	confirmKind     confirmAction
+	confirmTarget   string // list name for delete list
+	confirmItemPath []int  // item path for delete item
 }
 
 // New creates a new Model with default state.
@@ -143,12 +144,24 @@ func (m Model) halfPage() int {
 }
 
 // clampScroll adjusts scroll so that cursor is within the visible window.
-func clampScroll(cursor, scroll, visible int) int {
+// When total > visible, scroll arrows occupy the first and last visible rows,
+// so the cursor is kept within the inner content rows.
+func clampScroll(cursor, scroll, visible, total int) int {
 	if cursor < scroll {
 		scroll = cursor
 	}
 	if cursor >= scroll+visible {
 		scroll = cursor - visible + 1
+	}
+	if total > visible {
+		// ▲ arrow occupies lines[0] when scroll > 0; keep cursor below it.
+		if scroll > 0 && cursor <= scroll {
+			scroll = max(cursor-1, 0)
+		}
+		// ▼ arrow occupies lines[visible-1] when more content exists below.
+		if scroll+visible < total && cursor >= scroll+visible-1 {
+			scroll = cursor - visible + 2
+		}
 	}
 	return scroll
 }
@@ -188,7 +201,7 @@ func (m Model) View() tea.View {
 
 // scrollInfo describes the scroll state for a panel.
 type scrollInfo struct {
-	showUp, showDown   bool
+	showUp, showDown     bool
 	thumbStart, thumbEnd int // row indices within visible window
 }
 

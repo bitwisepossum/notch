@@ -119,7 +119,7 @@ func (m Model) updateItems(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.outdentItem()
 		}
 	}
-	m.itemScroll = clampScroll(m.itemCursor, m.itemScroll, m.visibleRows())
+	m.itemScroll = clampScroll(m.itemCursor, m.itemScroll, m.visibleRows(), len(m.flat))
 	return m, nil
 }
 

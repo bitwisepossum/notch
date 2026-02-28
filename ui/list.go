@@ -58,7 +58,7 @@ func (m Model) updateListPicker(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		}
 	}
-	m.listScroll = clampScroll(m.listCursor, m.listScroll, m.visibleRows())
+	m.listScroll = clampScroll(m.listCursor, m.listScroll, m.visibleRows(), len(m.lists))
 	return m, nil
 }
 
