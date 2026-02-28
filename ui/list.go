@@ -10,6 +10,13 @@ import (
 
 func (m Model) updateListPicker(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	case tea.MouseWheelMsg:
+		switch msg.Button {
+		case tea.MouseWheelDown:
+			m.listCursor = min(m.listCursor+1, len(m.lists)-1)
+		case tea.MouseWheelUp:
+			m.listCursor = max(m.listCursor-1, 0)
+		}
 	case tea.MouseClickMsg:
 		if msg.Button == tea.MouseLeft && len(m.lists) > 0 {
 			idx := m.listScroll + (msg.Y - headerLines)

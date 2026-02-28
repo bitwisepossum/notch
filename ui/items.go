@@ -35,6 +35,13 @@ func (m *Model) flattenItems(items []*todo.Item, parentPath []int, depth int) {
 
 func (m Model) updateItems(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	case tea.MouseWheelMsg:
+		switch msg.Button {
+		case tea.MouseWheelDown:
+			m.itemCursor = min(m.itemCursor+1, len(m.flat)-1)
+		case tea.MouseWheelUp:
+			m.itemCursor = max(m.itemCursor-1, 0)
+		}
 	case tea.MouseClickMsg:
 		if msg.Button == tea.MouseLeft && len(m.flat) > 0 {
 			idx := m.itemScroll + (msg.Y - headerLines)
