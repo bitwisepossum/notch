@@ -38,7 +38,7 @@ notch
 | `A` | Add child item |
 | `e` | Edit item |
 | `d` | Delete item |
-| `J` / `K` | Reorder item |
+| `J` / `K` / `Ctrl+↑/↓` | Reorder item |
 | `tab` / `Shift+tab` | Indent / outdent |
 | `esc` | Back to list picker |
 | `q` | Quit |
