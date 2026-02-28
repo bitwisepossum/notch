@@ -71,6 +71,7 @@ var (
 		},
 		{
 			{"J/K", "reorder"},
+			{"C-↑/↓", ""},
 			{"tab", "indent"},
 			{"S-tab", "outdent"},
 		},

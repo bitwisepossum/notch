@@ -109,9 +109,9 @@ func (m Model) updateItems(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.confirmItemPath = make([]int, len(fi.path))
 				copy(m.confirmItemPath, fi.path)
 			}
-		case "J":
+		case "J", "ctrl+down":
 			m.moveItem(1)
-		case "K":
+		case "K", "ctrl+up":
 			m.moveItem(-1)
 		case "tab":
 			m.indentItem()
