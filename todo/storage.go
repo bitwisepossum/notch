@@ -28,10 +28,19 @@ func DataDir() (string, error) {
 		}
 		dir = filepath.Join(configDir, "notch")
 	}
-	if err := os.MkdirAll(dir, 0o755); err != nil {
+	if err := os.MkdirAll(dir, 0o750); err != nil {
 		return "", err
 	}
 	return dir, nil
+}
+
+// openRoot returns an os.Root scoped to the data directory.
+func openRoot() (*os.Root, error) {
+	dir, err := DataDir()
+	if err != nil {
+		return nil, err
+	}
+	return os.OpenRoot(dir)
 }
 
 // ListAll returns the names of all saved lists (filenames without .md).
@@ -59,11 +68,13 @@ func ListAll() ([]string, error) {
 
 // Load reads and parses a list from its Markdown file.
 func Load(name string) (*List, error) {
-	dir, err := DataDir()
+	root, err := openRoot()
 	if err != nil {
 		return nil, err
 	}
-	f, err := os.Open(filepath.Join(dir, name+".md"))
+	defer root.Close()
+
+	f, err := root.Open(name + ".md")
 	if err != nil {
 		return nil, err
 	}
@@ -78,11 +89,13 @@ func Load(name string) (*List, error) {
 
 // Save writes a list to its Markdown file, creating or overwriting it.
 func Save(list *List) error {
-	dir, err := DataDir()
+	root, err := openRoot()
 	if err != nil {
 		return err
 	}
-	f, err := os.Create(filepath.Join(dir, list.Name+".md"))
+	defer root.Close()
+
+	f, err := root.Create(list.Name + ".md")
 	if err != nil {
 		return err
 	}
@@ -93,9 +106,11 @@ func Save(list *List) error {
 
 // Delete removes a list's Markdown file.
 func Delete(name string) error {
-	dir, err := DataDir()
+	root, err := openRoot()
 	if err != nil {
 		return err
 	}
-	return os.Remove(filepath.Join(dir, name+".md"))
+	defer root.Close()
+
+	return root.Remove(name + ".md")
 }
