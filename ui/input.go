@@ -3,7 +3,7 @@ package ui
 import (
 	"strings"
 
-	"notch/todo"
+	"github.com/bitwisepossum/notch/todo"
 
 	tea "charm.land/bubbletea/v2"
 )

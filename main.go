@@ -5,7 +5,7 @@ import (
 	"os"
 
 	tea "charm.land/bubbletea/v2"
-	"notch/ui"
+	"github.com/bitwisepossum/notch/ui"
 )
 
 func main() {

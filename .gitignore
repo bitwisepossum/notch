@@ -7,6 +7,13 @@
 *.dll
 *.so
 *.dylib
+*.zip
+
+# Build output
+notch
+notch-linux-*
+notch-windows-*
+notch-darwin-*
 
 # Test binary, built with `go test -c`
 *.test

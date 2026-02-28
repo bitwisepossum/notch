@@ -1,4 +1,4 @@
-module notch
+module github.com/bitwisepossum/notch
 
 go 1.25.0
 
