@@ -24,17 +24,17 @@ var (
 	styleSelected  = lipgloss.NewStyle().Background(colorBgSelect)
 	styleEmpty     = lipgloss.NewStyle().Italic(true).Foreground(colorMuted)
 	stylePrompt    = lipgloss.NewStyle().Bold(true).Foreground(colorAccent)
-	styleSeparator = lipgloss.NewStyle().Foreground(colorSeparator)
-	styleCount     = lipgloss.NewStyle().Foreground(colorMuted)
-	styleHelpKey   = lipgloss.NewStyle().Foreground(colorAccent)
-	styleHelpDesc  = lipgloss.NewStyle().Foreground(colorMuted)
+	// styleSeparator = lipgloss.NewStyle().Foreground(colorSeparator)
+	styleCount       = lipgloss.NewStyle().Foreground(colorMuted)
+	styleHelpKey     = lipgloss.NewStyle().Foreground(colorAccent)
+	styleHelpDesc    = lipgloss.NewStyle().Foreground(colorMuted)
 	styleDepthDot    = lipgloss.NewStyle().Foreground(colorSeparator)
 	styleScrollThumb = lipgloss.NewStyle().Foreground(colorMuted)
 	styleScrollTrack = lipgloss.NewStyle().Foreground(colorSeparator)
 	styleScrollArrow = lipgloss.NewStyle().Foreground(colorMuted)
 	stylePanel       = lipgloss.NewStyle().
-			Border(lipgloss.RoundedBorder()).
-			BorderForeground(colorBorder).
-			Padding(0, 1)
+				Border(lipgloss.RoundedBorder()).
+				BorderForeground(colorBorder).
+				Padding(0, 1)
 	styleFrame = lipgloss.NewStyle().PaddingTop(1).PaddingLeft(2)
 )
