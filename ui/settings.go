@@ -1,12 +1,19 @@
 package ui
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/bitwisepossum/notch/todo"
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
+)
+
+const (
+	settingsRowPath  = 0
+	settingsRowTheme = 1
+	settingsRowCount = 2
 )
 
 // updateSettings handles messages while the settings screen is active.
@@ -16,36 +23,97 @@ func (m Model) updateSettings(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		case "esc", "q":
 			m.mode = modeListPicker
+
+		case "j", "down":
+			m.settingsCursor = (m.settingsCursor + 1) % settingsRowCount
+		case "k", "up":
+			m.settingsCursor = (m.settingsCursor - 1 + settingsRowCount) % settingsRowCount
+
 		case "e":
-			m.prevMode = modeSettings
-			m.mode = modeInput
-			m.inputAction = inputSetDataDir
-			m.textInput.SetValue(m.settings.CustomDataDir)
-			return m, m.textInput.Focus()
+			if m.settingsCursor == settingsRowPath {
+				m.prevMode = modeSettings
+				m.mode = modeInput
+				m.inputAction = inputSetDataDir
+				m.textInput.SetValue(m.settings.CustomDataDir)
+				return m, m.textInput.Focus()
+			}
+
 		case "c":
-			m.settings.CustomDataDir = ""
-			_ = todo.SaveSettings(m.settings)
-			m.lists, _ = todo.ListAll()
-			m.listCursor = 0
-			m.listScroll = 0
+			if m.settingsCursor == settingsRowPath {
+				m.settings.CustomDataDir = ""
+				_ = todo.SaveSettings(m.settings)
+				m.lists, _ = todo.ListAll()
+				m.listCursor = 0
+				m.listScroll = 0
+			}
+
+		case "h", "left":
+			if m.settingsCursor == settingsRowTheme {
+				m.cycleTheme(-1)
+			}
+		case "l", "right":
+			if m.settingsCursor == settingsRowTheme {
+				m.cycleTheme(1)
+			}
 		}
 	}
 	return m, nil
 }
 
+// cycleTheme advances the active theme by delta (-1 or +1), applies and saves it.
+func (m *Model) cycleTheme(delta int) {
+	if len(m.themes) == 0 {
+		return
+	}
+	idx := (m.activeThemeIdx() + delta + len(m.themes)) % len(m.themes)
+	t := m.themes[idx]
+	m.settings.ActiveTheme = t.Key
+	_ = todo.SaveSettings(m.settings)
+	applyTheme(t)
+}
+
 // viewSettings renders the settings panel and help sidebar.
 func (m Model) viewSettings() string {
-	path := m.settings.CustomDataDir
-	if path == "" {
-		path = styleHelpDesc.Render("(default OS path)")
-	} else {
-		path = styleSelected.Render(path)
+	rows := []struct {
+		label string
+		value string
+	}{
+		{
+			label: "Save path",
+			value: func() string {
+				if m.settings.CustomDataDir == "" {
+					return styleHelpDesc.Render("(default OS path)")
+				}
+				return m.settings.CustomDataDir
+			}(),
+		},
+		{
+			label: "Theme",
+			value: func() string {
+				idx := m.activeThemeIdx()
+				name := todo.DefaultTheme.Name
+				if idx < len(m.themes) {
+					name = m.themes[idx].Name
+				}
+				total := len(m.themes)
+				return fmt.Sprintf("%s  %s", name, styleHelpDesc.Render(fmt.Sprintf("[%d/%d]", idx+1, total)))
+			}(),
+		},
 	}
 
-	row := styleCursor.Render("› ") + styleHelpKey.Render("Save path") + "  " + path
-
 	visible := m.visibleRows()
-	lines := []string{row}
+	lines := make([]string, 0, visible)
+	for i, row := range rows {
+		prefix := "  "
+		label := styleHelpDesc.Render(row.label)
+		value := row.value
+		if i == m.settingsCursor {
+			prefix = styleCursor.Render("› ")
+			label = styleHelpKey.Render(row.label)
+			value = styleSelected.Render(row.value)
+		}
+		lines = append(lines, prefix+label+"  "+value)
+	}
 	for len(lines) < visible {
 		lines = append(lines, "")
 	}

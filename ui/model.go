@@ -50,7 +50,9 @@ type Model struct {
 	inputAction inputAction
 
 	// Settings
-	settings todo.Settings
+	settings       todo.Settings
+	themes         []todo.Theme
+	settingsCursor int // 0=save path, 1=theme
 
 	// List picker state
 	lists      []string
@@ -106,6 +108,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case settingsLoadedMsg:
 		m.settings = msg.settings
+		return m, m.loadThemesCmd
+
+	case themesLoadedMsg:
+		m.themes = msg.themes
+		m.applyActiveTheme()
 		return m, m.loadLists
 
 	case listsLoadedMsg:
@@ -284,6 +291,10 @@ type settingsLoadedMsg struct {
 	settings todo.Settings
 }
 
+type themesLoadedMsg struct {
+	themes []todo.Theme
+}
+
 type listsLoadedMsg struct {
 	lists []string
 	err   error
@@ -298,6 +309,32 @@ type listOpenedMsg struct {
 func (m Model) loadSettingsCmd() tea.Msg {
 	s, _ := todo.LoadSettings()
 	return settingsLoadedMsg{settings: s}
+}
+
+// loadThemesCmd scans the themes directory and returns a themesLoadedMsg.
+func (m Model) loadThemesCmd() tea.Msg {
+	return themesLoadedMsg{themes: todo.LoadThemes()}
+}
+
+// applyActiveTheme applies the theme matching settings.ActiveTheme to all style vars.
+func (m *Model) applyActiveTheme() {
+	for _, t := range m.themes {
+		if t.Key == m.settings.ActiveTheme {
+			applyTheme(t)
+			return
+		}
+	}
+	applyTheme(todo.DefaultTheme)
+}
+
+// activeThemeIdx returns the index into m.themes of the currently active theme.
+func (m Model) activeThemeIdx() int {
+	for i, t := range m.themes {
+		if t.Key == m.settings.ActiveTheme {
+			return i
+		}
+	}
+	return 0
 }
 
 // loadLists fetches all saved list names and returns a listsLoadedMsg.

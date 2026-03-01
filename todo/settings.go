@@ -9,6 +9,7 @@ import (
 // Settings holds user-configurable application settings.
 type Settings struct {
 	CustomDataDir string `json:"custom_data_dir,omitempty"`
+	ActiveTheme   string `json:"active_theme,omitempty"` // theme Key; empty = built-in default
 }
 
 const settingsFile = "settings.json"

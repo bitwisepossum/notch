@@ -1,0 +1,11 @@
+{
+  "name": "Amber",
+  "bg_select":  "#2D1A00",
+  "muted":      "#8B5A00",
+  "primary":    "#C47A00",
+  "accent":     "#FFB300",
+  "danger":     "#CC4400",
+  "separator":  "#4A2E00",
+  "border":     "#A06000",
+  "done":       "#3D2600"
+}

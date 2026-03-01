@@ -57,8 +57,15 @@ var (
 	}
 	settingsHelp = [][]helpPair{
 		{
+			{"j/k", "move"},
+		},
+		{
 			{"e", "set path"},
-			{"c", "clear (default)"},
+			{"c", "clear path"},
+		},
+		{
+			{"←/→", "theme"},
+			{"h/l", ""},
 			{"esc", "back"},
 		},
 	}

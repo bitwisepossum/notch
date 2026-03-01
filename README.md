@@ -25,6 +25,7 @@ notch
 | `enter` | Open list |
 | `n` | New list |
 | `d` | Delete list |
+| `s` | Settings |
 | `q` | Quit |
 
 ### Items
@@ -40,13 +41,32 @@ notch
 | `d` | Delete item |
 | `J` / `K` / `Ctrl+↑/↓` | Reorder item |
 | `tab` / `Shift+tab` | Indent / outdent |
+| `/` | Search |
 | `esc` | Back to list picker |
 | `q` | Quit |
+
+### Settings
+
+| Key | Action |
+|-----|--------|
+| `j` / `k` | Move between settings |
+| `e` | Set custom save path |
+| `c` | Clear save path (revert to default) |
+| `←` / `→` / `h` / `l` | Cycle theme |
+| `esc` | Back |
 
 ## Storage
 
 Lists are saved as `.md` files in your platform's data directory:
 
-- Linux: `~/.local/share/notch/`
-- macOS: `~/Library/Application Support/notch/`
-- Windows: `%APPDATA%\notch\`
+| Platform | Path |
+|----------|------|
+| Linux    | `~/.local/share/notch/` |
+| macOS    | `~/Library/Application Support/notch/` |
+| Windows  | `%APPDATA%\notch\` |
+
+The save path can be changed from the Settings screen. The settings file itself (`settings.json`) always stays in the default location above.
+
+## Themes
+
+Themes are `.json` files placed in the `themes/` subfolder of the data directory. On first launch the folder is created automatically. See [`example-themes/`](example-themes/) for included examples and the full field reference.

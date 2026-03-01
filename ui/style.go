@@ -1,6 +1,9 @@
 package ui
 
-import "charm.land/lipgloss/v2"
+import (
+	"charm.land/lipgloss/v2"
+	"github.com/bitwisepossum/notch/todo"
+)
 
 // Nokia LCD-inspired monochrome green palette.
 var (
@@ -37,3 +40,37 @@ var (
 				Padding(0, 1)
 	styleFrame = lipgloss.NewStyle().PaddingTop(1).PaddingLeft(2)
 )
+
+// applyTheme reassigns all color and style vars to match t.
+func applyTheme(t todo.Theme) {
+	colorBgSelect = lipgloss.Color(t.BgSelect)
+	colorMuted = lipgloss.Color(t.Muted)
+	colorPrimary = lipgloss.Color(t.Primary)
+	colorAccent = lipgloss.Color(t.Accent)
+	colorDanger = lipgloss.Color(t.Danger)
+	colorSeparator = lipgloss.Color(t.Separator)
+	colorBorder = lipgloss.Color(t.Border)
+	colorDone = lipgloss.Color(t.Done)
+
+	styleTitle = lipgloss.NewStyle().Bold(true).Foreground(colorAccent)
+	styleCursor = lipgloss.NewStyle().Bold(true).Foreground(colorAccent)
+	styleDone = lipgloss.NewStyle().Strikethrough(true).Foreground(colorDone)
+	styleConfirm = lipgloss.NewStyle().Bold(true).Foreground(colorDanger)
+	styleCheckDone = lipgloss.NewStyle().Foreground(colorMuted)
+	styleCheckOpen = lipgloss.NewStyle().Foreground(colorPrimary)
+	styleSelected = lipgloss.NewStyle().Background(colorBgSelect)
+	styleEmpty = lipgloss.NewStyle().Italic(true).Foreground(colorMuted)
+	stylePrompt = lipgloss.NewStyle().Bold(true).Foreground(colorAccent)
+	styleCount = lipgloss.NewStyle().Foreground(colorMuted)
+	styleHelpKey = lipgloss.NewStyle().Foreground(colorAccent)
+	styleHelpDesc = lipgloss.NewStyle().Foreground(colorMuted)
+	styleDepthDot = lipgloss.NewStyle().Foreground(colorSeparator)
+	styleScrollThumb = lipgloss.NewStyle().Foreground(colorMuted)
+	styleScrollTrack = lipgloss.NewStyle().Foreground(colorSeparator)
+	styleScrollArrow = lipgloss.NewStyle().Foreground(colorMuted)
+	stylePanel = lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(colorBorder).
+		Padding(0, 1)
+	styleFrame = lipgloss.NewStyle().PaddingTop(1).PaddingLeft(2)
+}
