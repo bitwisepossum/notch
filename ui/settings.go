@@ -45,7 +45,7 @@ func (m Model) updateSettings(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "esc":
 			m.mode = modeListPicker
 		case "q":
-			return m, m.saveAndQuit
+			m.mode = modeListPicker
 
 		case "j", "down":
 			m.settingsCursor = (m.settingsCursor + 1) % settingsRowCount

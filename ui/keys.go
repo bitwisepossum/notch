@@ -68,7 +68,7 @@ var (
 			{"←/→", "theme"},
 			{"h/l", ""},
 			{"esc", "back"},
-			{"q", "quit"},
+			{"q", "back"},
 		},
 	}
 	itemsHelp = [][]helpPair{
@@ -95,7 +95,7 @@ var (
 		{
 			{"/", "search"},
 			{"esc", "back/clear"},
-			{"q", "quit"},
+			{"q", "back"},
 		},
 	}
 	inputHelp = [][]helpPair{

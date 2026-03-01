@@ -68,7 +68,11 @@ func (m Model) updateItems(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "q":
-			return m, m.saveAndQuit
+			m.save()
+			m.list = nil
+			m.flat = nil
+			m.mode = modeListPicker
+			return m, m.loadLists
 		case "/":
 			m.mode = modeSearch
 			m.textInput.SetValue(m.searchQuery)
