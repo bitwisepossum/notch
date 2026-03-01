@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"slices"
 	"strings"
 
 	"github.com/bitwisepossum/notch/todo"
@@ -37,6 +38,9 @@ func (m Model) updateInput(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m *Model) commitInput(val string) {
 	switch m.inputAction {
 	case inputNewList:
+		if slices.Contains(m.lists, val) {
+			return
+		}
 		// Create a new empty list file, then reload.
 		newList := &todo.List{Name: val}
 		_ = todo.Save(newList)
@@ -115,7 +119,7 @@ func (m *Model) commitInput(val string) {
 
 	case inputRenameList:
 		oldName := m.lists[m.listCursor]
-		if oldName != val {
+		if oldName != val && !slices.Contains(m.lists, val) {
 			list, err := todo.Load(oldName)
 			if err != nil {
 				return
