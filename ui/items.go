@@ -18,8 +18,15 @@ type flatItem struct {
 }
 
 // rebuildFlat walks the item tree and produces a flat list for rendering.
+// When a search query is active, only matching items are included.
 func (m *Model) rebuildFlat() {
 	m.flat = m.flat[:0]
+	if m.searchQuery != "" {
+		for _, r := range m.list.Search(m.searchQuery) {
+			m.flat = append(m.flat, flatItem{item: r.Item, path: r.Path, depth: len(r.Path) - 1})
+		}
+		return
+	}
 	m.flattenItems(m.list.Items, nil, 0)
 }
 
@@ -62,7 +69,18 @@ func (m Model) updateItems(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		case "q":
 			return m, m.saveAndQuit
+		case "/":
+			m.mode = modeSearch
+			m.textInput.SetValue(m.searchQuery)
+			return m, m.textInput.Focus()
 		case "esc":
+			if m.searchQuery != "" {
+				m.searchQuery = ""
+				m.rebuildFlat()
+				m.itemCursor = min(m.itemCursor, max(len(m.flat)-1, 0))
+				m.itemScroll = clampScroll(m.itemCursor, m.itemScroll, m.visibleRows(), len(m.flat))
+				return m, nil
+			}
 			m.save()
 			m.list = nil
 			m.flat = nil
@@ -272,6 +290,9 @@ func (m Model) viewItems() string {
 			}
 
 			text := fi.item.Text
+			if m.searchQuery != "" && !fi.item.Done {
+				text = highlightMatch(text, m.searchQuery)
+			}
 			if fi.item.Done {
 				text = styleDone.Render(text)
 			}
@@ -299,6 +320,9 @@ func (m Model) viewItems() string {
 	var b strings.Builder
 	title := styleTitle.Render(strings.ToUpper(m.list.Name))
 	count := styleCount.Render(fmt.Sprintf("  (%d)", len(m.flat)))
+	if m.searchQuery != "" {
+		count += "  " + stylePrompt.Render("/") + styleHelpDesc.Render(m.searchQuery)
+	}
 	b.WriteString(title + count + "\n")
 	b.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, panel, help))
 	return b.String()

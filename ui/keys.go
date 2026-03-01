@@ -76,7 +76,8 @@ var (
 			{"S-tab", "outdent"},
 		},
 		{
-			{"esc", "back"},
+			{"/", "search"},
+			{"esc", "back/clear"},
 			{"q", "quit"},
 		},
 	}

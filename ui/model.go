@@ -18,6 +18,7 @@ const (
 	modeItems                  // item browser for an open list
 	modeInput                  // text input overlay
 	modeConfirm                // yes/no confirmation overlay
+	modeSearch                 // search/filter input overlay
 )
 
 // inputAction tracks what the text input is being used for.
@@ -52,10 +53,11 @@ type Model struct {
 	listScroll int
 
 	// Items browser state
-	list       *todo.List
-	flat       []flatItem
-	itemCursor int
-	itemScroll int
+	list        *todo.List
+	flat        []flatItem
+	itemCursor  int
+	itemScroll  int
+	searchQuery string // active filter; empty means no filter
 
 	// Text input
 	textInput textinput.Model
@@ -109,6 +111,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.mode = modeItems
 		m.itemCursor = 0
 		m.itemScroll = 0
+		m.searchQuery = ""
 		m.rebuildFlat()
 		return m, nil
 
@@ -128,6 +131,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m.updateInput(msg)
 	case modeConfirm:
 		return m.updateConfirm(msg)
+	case modeSearch:
+		return m.updateSearch(msg)
 	}
 	return m, nil
 }
@@ -192,6 +197,8 @@ func (m Model) View() tea.View {
 		s = m.viewInput()
 	case modeConfirm:
 		s = m.viewConfirm()
+	case modeSearch:
+		s = m.viewSearch()
 	}
 
 	framed := styleFrame.Render(s)
