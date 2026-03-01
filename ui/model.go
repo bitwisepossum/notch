@@ -52,7 +52,9 @@ type Model struct {
 	// Settings
 	settings       todo.Settings
 	themes         []todo.Theme
-	settingsCursor int // 0=save path, 1=theme
+	settingsCursor int    // 0=save path, 1=theme
+	defaultDataDir string // resolved OS default data dir (never changes)
+	activeListDir  string // current list storage dir (custom or default)
 
 	// List picker state
 	lists      []string
@@ -108,6 +110,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case settingsLoadedMsg:
 		m.settings = msg.settings
+		m.defaultDataDir = msg.defaultDataDir
+		m.activeListDir = msg.activeListDir
 		return m, m.loadThemesCmd
 
 	case themesLoadedMsg:
@@ -288,7 +292,9 @@ func renderScrollbar(lines []string, si scrollInfo, panelWidth int) []string {
 // Messages
 
 type settingsLoadedMsg struct {
-	settings todo.Settings
+	settings       todo.Settings
+	defaultDataDir string
+	activeListDir  string
 }
 
 type themesLoadedMsg struct {
@@ -308,7 +314,9 @@ type listOpenedMsg struct {
 // loadSettingsCmd loads settings from disk and returns a settingsLoadedMsg.
 func (m Model) loadSettingsCmd() tea.Msg {
 	s, _ := todo.LoadSettings()
-	return settingsLoadedMsg{settings: s}
+	defaultDir, _ := todo.DataDir()
+	activeDir, _ := todo.ListDir()
+	return settingsLoadedMsg{settings: s, defaultDataDir: defaultDir, activeListDir: activeDir}
 }
 
 // loadThemesCmd scans the themes directory and returns a themesLoadedMsg.
@@ -335,6 +343,13 @@ func (m Model) activeThemeIdx() int {
 		}
 	}
 	return 0
+}
+
+// refreshListDir updates activeListDir from the current settings.
+func (m *Model) refreshListDir() {
+	if d, err := todo.ListDir(); err == nil {
+		m.activeListDir = d
+	}
 }
 
 // loadLists fetches all saved list names and returns a listsLoadedMsg.

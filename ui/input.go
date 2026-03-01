@@ -108,6 +108,7 @@ func (m *Model) commitInput(val string) {
 	case inputSetDataDir:
 		m.settings.CustomDataDir = val
 		_ = todo.SaveSettings(m.settings)
+		m.refreshListDir()
 		m.lists, _ = todo.ListAll()
 		m.listCursor = 0
 		m.listScroll = 0

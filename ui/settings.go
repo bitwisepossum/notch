@@ -47,6 +47,7 @@ func (m Model) updateSettings(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.settingsCursor == settingsRowPath {
 				m.settings.CustomDataDir = ""
 				_ = todo.SaveSettings(m.settings)
+				m.refreshListDir()
 				m.lists, _ = todo.ListAll()
 				m.listCursor = 0
 				m.listScroll = 0
@@ -87,7 +88,7 @@ func (m Model) viewSettings() string {
 			label: "Save path",
 			value: func() string {
 				if m.settings.CustomDataDir == "" {
-					return styleHelpDesc.Render("(default OS path)")
+					return m.defaultDataDir + styleHelpDesc.Render("  (default)")
 				}
 				return m.settings.CustomDataDir
 			}(),
