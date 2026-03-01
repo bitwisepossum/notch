@@ -123,12 +123,16 @@ func (m Model) viewSettings() string {
 			label: "Theme",
 			value: func() string {
 				idx := m.activeThemeIdx()
-				name := todo.DefaultTheme.Name
+				t := todo.DefaultTheme
 				if idx < len(m.themes) {
-					name = m.themes[idx].Name
+					t = m.themes[idx]
+				}
+				file := ""
+				if t.Key != "" {
+					file = styleHelpDesc.Render("  (" + t.Key + ".json)")
 				}
 				total := len(m.themes)
-				return fmt.Sprintf("%s  %s", name, styleHelpDesc.Render(fmt.Sprintf("[%d/%d]", idx+1, total)))
+				return fmt.Sprintf("%s%s  %s", t.Name, file, styleHelpDesc.Render(fmt.Sprintf("[%d/%d]", idx+1, total)))
 			}(),
 		},
 	}
