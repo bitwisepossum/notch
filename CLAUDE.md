@@ -45,3 +45,14 @@ go vet ./...         # lint
 - Short, imperative subject line (e.g. "Fix cursor reset on delete")
 - No unnecessary detail — KISS
 - No mentions of tooling, themes, or implementation flavor in the subject
+
+## Version
+
+The version string lives in `ui/version.go` — one constant, one file.
+
+**Version push workflow:**
+1. Update `Version` in `ui/version.go` (e.g. `"0.2.0"`)
+2. Commit: `Bump version to v0.2.0`
+3. Tag: `git tag v0.2.0`
+
+Regular commits do not touch the version.
