@@ -116,9 +116,14 @@ func (m *Model) commitInput(val string) {
 	case inputRenameList:
 		oldName := m.lists[m.listCursor]
 		if oldName != val {
-			list, _ := todo.Load(oldName)
+			list, err := todo.Load(oldName)
+			if err != nil {
+				return
+			}
 			list.Rename(val)
-			_ = todo.Save(list)
+			if err := todo.Save(list); err != nil {
+				return
+			}
 			_ = todo.Delete(oldName)
 			m.lists, _ = todo.ListAll()
 			for i, name := range m.lists {
