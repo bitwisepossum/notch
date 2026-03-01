@@ -31,6 +31,7 @@ const (
 	inputNewChild
 	inputEditItem
 	inputSetDataDir
+	inputRenameList
 )
 
 // confirmAction tracks what the confirm dialog is for.

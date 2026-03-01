@@ -112,6 +112,22 @@ func (m *Model) commitInput(val string) {
 		m.lists, _ = todo.ListAll()
 		m.listCursor = 0
 		m.listScroll = 0
+
+	case inputRenameList:
+		oldName := m.lists[m.listCursor]
+		if oldName != val {
+			list, _ := todo.Load(oldName)
+			list.Name = val
+			_ = todo.Save(list)
+			_ = todo.Delete(oldName)
+			m.lists, _ = todo.ListAll()
+			for i, name := range m.lists {
+				if name == val {
+					m.listCursor = i
+					break
+				}
+			}
+		}
 	}
 }
 
@@ -143,6 +159,8 @@ func (m Model) viewInput() string {
 		prompt = "Edit: "
 	case inputSetDataDir:
 		prompt = "Save path: "
+	case inputRenameList:
+		prompt = "Rename: "
 	}
 	b.WriteString(stylePrompt.Render(prompt) + m.textInput.View() + "\n")
 	b.WriteString(renderHelp(inputHelp))

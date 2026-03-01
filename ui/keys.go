@@ -50,6 +50,7 @@ var (
 		},
 		{
 			{"n", "new"},
+			{"r", "rename"},
 			{"d", "delete"},
 			{"s", "settings"},
 			{"q", "quit"},

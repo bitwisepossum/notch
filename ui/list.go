@@ -51,6 +51,14 @@ func (m Model) updateListPicker(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		case "s":
 			m.mode = modeSettings
+		case "r":
+			if len(m.lists) > 0 {
+				m.prevMode = modeListPicker
+				m.mode = modeInput
+				m.inputAction = inputRenameList
+				m.textInput.SetValue(m.lists[m.listCursor])
+				return m, m.textInput.Focus()
+			}
 		case "n":
 			m.prevMode = modeListPicker
 			m.mode = modeInput
