@@ -16,16 +16,23 @@ func (m Model) updateInput(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		case "enter":
 			val := strings.TrimSpace(m.textInput.Value())
+			m.inputErr = ""
 			if val != "" {
 				m.commitInput(val)
 			}
-			m.textInput.Blur()
-			m.mode = m.prevMode
+			if m.inputErr == "" {
+				m.textInput.Blur()
+				m.mode = m.prevMode
+			}
 			return m, nil
 		case "esc":
+			m.inputErr = ""
 			m.textInput.Blur()
 			m.mode = m.prevMode
 			return m, nil
+		default:
+			// User typed something — clear any standing error.
+			m.inputErr = ""
 		}
 	}
 
@@ -39,6 +46,7 @@ func (m *Model) commitInput(val string) {
 	switch m.inputAction {
 	case inputNewList:
 		if slices.Contains(m.lists, val) {
+			m.inputErr = "a list named " + val + " already exists"
 			return
 		}
 		// Create a new empty list file, then reload.
@@ -119,7 +127,11 @@ func (m *Model) commitInput(val string) {
 
 	case inputRenameList:
 		oldName := m.lists[m.listCursor]
-		if oldName != val && !slices.Contains(m.lists, val) {
+		if oldName != val && slices.Contains(m.lists, val) {
+			m.inputErr = "a list named " + val + " already exists"
+			return
+		}
+		if oldName != val {
 			list, err := todo.Load(oldName)
 			if err != nil {
 				return
@@ -171,7 +183,11 @@ func (m Model) viewInput() string {
 	case inputRenameList:
 		prompt = "Rename: "
 	}
-	b.WriteString(stylePrompt.Render(prompt) + m.textInput.View() + "\n")
+	errStr := ""
+	if m.inputErr != "" {
+		errStr = "   " + styleConfirm.Render(m.inputErr)
+	}
+	b.WriteString(stylePrompt.Render(prompt) + m.textInput.View() + errStr + "\n")
 	b.WriteString(renderHelp(inputHelp))
 	return b.String()
 }

@@ -73,6 +73,7 @@ type Model struct {
 
 	// Text input
 	textInput textinput.Model
+	inputErr  string // non-empty while input overlay shows an error
 
 	// Confirm dialog
 	confirmMsg      string
