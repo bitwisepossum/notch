@@ -19,6 +19,27 @@ const (
 // updateSettings handles messages while the settings screen is active.
 func (m Model) updateSettings(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	case tea.MouseClickMsg:
+		if msg.Button == tea.MouseLeft {
+			row := msg.Y - headerLines
+			if row >= 0 && row < settingsRowCount {
+				if row == m.settingsCursor {
+					// Second click on selected row — activate it.
+					switch m.settingsCursor {
+					case settingsRowPath:
+						m.prevMode = modeSettings
+						m.mode = modeInput
+						m.inputAction = inputSetDataDir
+						m.textInput.SetValue(m.settings.CustomDataDir)
+						return m, m.textInput.Focus()
+					case settingsRowTheme:
+						m.cycleTheme(1)
+					}
+				} else {
+					m.settingsCursor = row
+				}
+			}
+		}
 	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "esc":
