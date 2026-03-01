@@ -108,10 +108,11 @@ func (m Model) viewSettings() string {
 		{
 			label: "Save path",
 			value: func() string {
+				suffix := ""
 				if m.settings.CustomDataDir == "" {
-					return m.defaultDataDir + styleHelpDesc.Render("  (default)")
+					suffix = styleHelpDesc.Render("  (default)")
 				}
-				return m.settings.CustomDataDir
+				return m.activeListDir + suffix
 			}(),
 		},
 		{
