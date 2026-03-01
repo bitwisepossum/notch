@@ -67,6 +67,7 @@ var (
 		{
 			{"←/→", "theme"},
 			{"h/l", ""},
+			{"R", "reload themes"},
 			{"esc", "back"},
 			{"q", "back"},
 		},

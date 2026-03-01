@@ -82,6 +82,10 @@ func (m Model) updateSettings(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.settingsCursor == settingsRowTheme {
 				m.cycleTheme(1)
 			}
+
+		case "R":
+			m.themes = todo.LoadThemes()
+			m.applyActiveTheme()
 		}
 	}
 	return m, nil
