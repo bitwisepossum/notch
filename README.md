@@ -24,6 +24,7 @@ notch
 | `PgDn` / `PgUp` / `Shift+↑/↓` | Jump half page |
 | `enter` | Open list |
 | `n` | New list |
+| `r` | Rename list |
 | `d` | Delete list |
 | `s` | Settings |
 | `q` | Quit |
@@ -42,8 +43,7 @@ notch
 | `J` / `K` / `Ctrl+↑/↓` | Reorder item |
 | `tab` / `Shift+tab` | Indent / outdent |
 | `/` | Search |
-| `esc` | Back to list picker |
-| `q` | Quit |
+| `esc` / `q` | Back to list picker |
 
 ### Settings
 
@@ -53,7 +53,8 @@ notch
 | `e` | Set custom save path |
 | `c` | Clear save path (revert to default) |
 | `←` / `→` / `h` / `l` | Cycle theme |
-| `esc` | Back |
+| `R` | Reload themes from disk |
+| `esc` / `q` | Back |
 
 ## Storage
 
