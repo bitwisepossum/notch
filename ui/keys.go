@@ -60,13 +60,14 @@ var (
 			{"j/k", "move"},
 		},
 		{
-			{"e", "set path"},
+			{"enter/e", "set path"},
 			{"c", "clear path"},
 		},
 		{
 			{"←/→", "theme"},
 			{"h/l", ""},
 			{"esc", "back"},
+			{"q", "quit"},
 		},
 	}
 	itemsHelp = [][]helpPair{

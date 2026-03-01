@@ -21,21 +21,26 @@ func (m Model) updateSettings(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyPressMsg:
 		switch msg.String() {
-		case "esc", "q":
+		case "esc":
 			m.mode = modeListPicker
+		case "q":
+			return m, m.saveAndQuit
 
 		case "j", "down":
 			m.settingsCursor = (m.settingsCursor + 1) % settingsRowCount
 		case "k", "up":
 			m.settingsCursor = (m.settingsCursor - 1 + settingsRowCount) % settingsRowCount
 
-		case "e":
-			if m.settingsCursor == settingsRowPath {
+		case "enter", "e":
+			switch m.settingsCursor {
+			case settingsRowPath:
 				m.prevMode = modeSettings
 				m.mode = modeInput
 				m.inputAction = inputSetDataDir
 				m.textInput.SetValue(m.settings.CustomDataDir)
 				return m, m.textInput.Focus()
+			case settingsRowTheme:
+				m.cycleTheme(1)
 			}
 
 		case "c":
