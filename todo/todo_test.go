@@ -156,3 +156,58 @@ func TestMove_EmptyTo(t *testing.T) {
 		t.Fatal("expected error for empty to path")
 	}
 }
+
+func TestSearch_Match(t *testing.T) {
+	l := newTestList()
+	results := l.Search("child")
+	if len(results) != 2 {
+		t.Fatalf("expected 2 results, got %d", len(results))
+	}
+	if results[0].Item.Text != "Child A" {
+		t.Errorf("expected 'Child A', got %q", results[0].Item.Text)
+	}
+	if results[1].Item.Text != "Child B" {
+		t.Errorf("expected 'Child B', got %q", results[1].Item.Text)
+	}
+}
+
+func TestSearch_CaseInsensitive(t *testing.T) {
+	l := newTestList()
+	results := l.Search("FIRST")
+	if len(results) != 1 {
+		t.Fatalf("expected 1 result, got %d", len(results))
+	}
+	if results[0].Item.Text != "First" {
+		t.Errorf("expected 'First', got %q", results[0].Item.Text)
+	}
+}
+
+func TestSearch_Path(t *testing.T) {
+	l := newTestList()
+	results := l.Search("Child B")
+	if len(results) != 1 {
+		t.Fatalf("expected 1 result, got %d", len(results))
+	}
+	want := []int{0, 1}
+	got := results[0].Path
+	if len(got) != len(want) || got[0] != want[0] || got[1] != want[1] {
+		t.Errorf("expected path %v, got %v", want, got)
+	}
+}
+
+func TestSearch_NoMatch(t *testing.T) {
+	l := newTestList()
+	results := l.Search("zzz")
+	if len(results) != 0 {
+		t.Fatalf("expected 0 results, got %d", len(results))
+	}
+}
+
+func TestSearch_EmptyQuery(t *testing.T) {
+	l := newTestList()
+	// empty query matches all 4 items (First, Child A, Child B, Second)
+	results := l.Search("")
+	if len(results) != 4 {
+		t.Fatalf("expected 4 results, got %d", len(results))
+	}
+}

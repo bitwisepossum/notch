@@ -1,6 +1,15 @@
 package todo
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
+
+// SearchResult pairs a matched item with its path in the tree.
+type SearchResult struct {
+	Path []int
+	Item *Item
+}
 
 // Item represents a single TODO entry, potentially with nested children.
 type Item struct {
@@ -88,6 +97,27 @@ func (l *List) Toggle(path []int) error {
 	}
 	item.Done = !item.Done
 	return nil
+}
+
+// Search returns all items whose text contains query (case-insensitive).
+// Results are ordered depth-first. An empty query matches every item.
+func (l *List) Search(query string) []SearchResult {
+	query = strings.ToLower(query)
+	var results []SearchResult
+	var walk func(items []*Item, prefix []int)
+	walk = func(items []*Item, prefix []int) {
+		for i, item := range items {
+			path := make([]int, len(prefix)+1)
+			copy(path, prefix)
+			path[len(prefix)] = i
+			if strings.Contains(strings.ToLower(item.Text), query) {
+				results = append(results, SearchResult{Path: path, Item: item})
+			}
+			walk(item.Children, path)
+		}
+	}
+	walk(l.Items, nil)
+	return results
 }
 
 // Move relocates an item from one path to another.
