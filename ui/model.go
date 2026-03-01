@@ -53,7 +53,7 @@ type Model struct {
 
 	// Settings
 	settings       todo.Settings
-	themes         []todo.Theme
+	themes         []Theme
 	settingsCursor int    // 0=save path, 1=theme
 	defaultDataDir string // resolved OS default data dir (never changes)
 	activeListDir  string // current list storage dir (custom or default)
@@ -300,7 +300,7 @@ type settingsLoadedMsg struct {
 }
 
 type themesLoadedMsg struct {
-	themes []todo.Theme
+	themes []Theme
 }
 
 type listsLoadedMsg struct {
@@ -323,7 +323,7 @@ func (m Model) loadSettingsCmd() tea.Msg {
 
 // loadThemesCmd scans the themes directory and returns a themesLoadedMsg.
 func (m Model) loadThemesCmd() tea.Msg {
-	return themesLoadedMsg{themes: todo.LoadThemes()}
+	return themesLoadedMsg{themes: LoadThemes()}
 }
 
 // applyActiveTheme applies the theme matching settings.ActiveTheme to all style vars.
@@ -334,7 +334,7 @@ func (m *Model) applyActiveTheme() {
 			return
 		}
 	}
-	applyTheme(todo.DefaultTheme)
+	applyTheme(DefaultTheme)
 }
 
 // activeThemeIdx returns the index into m.themes of the currently active theme.

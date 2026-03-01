@@ -1,13 +1,15 @@
-package todo
+package ui
 
 import (
 	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/bitwisepossum/notch/todo"
 )
 
-// Theme defines the color palette used by the UI.
+// Theme defines the color palette used by the TUI.
 type Theme struct {
 	Key       string // filename stem; empty for the built-in default (not in JSON)
 	Name      string `json:"name"`
@@ -42,7 +44,7 @@ const themesSubdir = "themes"
 func LoadThemes() []Theme {
 	themes := []Theme{DefaultTheme}
 
-	dir, err := DataDir()
+	dir, err := todo.DataDir()
 	if err != nil {
 		return themes
 	}

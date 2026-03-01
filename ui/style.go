@@ -2,7 +2,6 @@ package ui
 
 import (
 	"charm.land/lipgloss/v2"
-	"github.com/bitwisepossum/notch/todo"
 )
 
 // Nokia LCD-inspired monochrome green palette.
@@ -42,7 +41,7 @@ var (
 )
 
 // applyTheme reassigns all color and style vars to match t.
-func applyTheme(t todo.Theme) {
+func applyTheme(t Theme) {
 	colorBgSelect = lipgloss.Color(t.BgSelect)
 	colorMuted = lipgloss.Color(t.Muted)
 	colorPrimary = lipgloss.Color(t.Primary)

@@ -84,7 +84,7 @@ func (m Model) updateSettings(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		case "R":
-			m.themes = todo.LoadThemes()
+			m.themes = LoadThemes()
 			m.applyActiveTheme()
 		}
 	}
@@ -123,7 +123,7 @@ func (m Model) viewSettings() string {
 			label: "Theme",
 			value: func() string {
 				idx := m.activeThemeIdx()
-				t := todo.DefaultTheme
+				t := DefaultTheme
 				if idx < len(m.themes) {
 					t = m.themes[idx]
 				}
