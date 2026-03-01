@@ -176,6 +176,9 @@ func (m *Model) moveItem(dir int) {
 	if newIdx < 0 {
 		return
 	}
+	if newIdx >= m.list.ChildCount(path[:len(path)-1]) {
+		return
+	}
 
 	to := make([]int, len(path))
 	copy(to, path)

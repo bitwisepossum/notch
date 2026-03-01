@@ -125,6 +125,16 @@ func (l *List) Rename(newName string) {
 	l.Name = newName
 }
 
+// ChildCount returns the number of direct children at parentPath.
+// An empty parentPath returns the top-level item count.
+func (l *List) ChildCount(parentPath []int) int {
+	items, err := l.resolveParent(parentPath)
+	if err != nil {
+		return 0
+	}
+	return len(*items)
+}
+
 // Move relocates an item from one path to another.
 // The item (with its children) is removed from `from` and inserted at `to`.
 func (l *List) Move(from, to []int) error {
