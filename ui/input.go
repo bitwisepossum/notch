@@ -91,10 +91,10 @@ func (m *Model) commitInput(val string) {
 		if len(m.flat) > 0 {
 			fi := m.flat[m.itemCursor]
 			m.list.Add(fi.path, val)
+			newChild := fi.item.Children[len(fi.item.Children)-1]
 			m.save()
 			m.rebuildFlat()
-			// Move cursor to the new child (it's right after the current item in flat list).
-			m.itemCursor++
+			m.followItem(newChild)
 		}
 
 	case inputEditItem:
