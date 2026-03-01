@@ -256,28 +256,22 @@ func computeScroll(scroll, total, visible int) scrollInfo {
 	return si
 }
 
-// renderScrollbar adds arrow indicators and a left-side scrollbar to content lines.
-// lines must have exactly `visible` entries. panelWidth is used to center arrows.
+// renderScrollbar adds arrow indicators and a right-side scrollbar to content lines.
+// lines must have exactly `visible` entries. panelWidth is used to right-align arrows.
 func renderScrollbar(lines []string, si scrollInfo, panelWidth int) []string {
 	if !si.showUp && !si.showDown {
 		return lines // no overflow, no track
 	}
 
+	pad := panelWidth - 1
+	if pad < 0 {
+		pad = 0
+	}
 	if si.showUp {
-		arrow := styleScrollArrow.Render("▲")
-		pad := (panelWidth - 1) / 2 // rough center
-		if pad < 0 {
-			pad = 0
-		}
-		lines[0] = strings.Repeat(" ", pad) + arrow
+		lines[0] = strings.Repeat(" ", pad) + styleScrollArrow.Render("▲")
 	}
 	if si.showDown && len(lines) > 0 {
-		arrow := styleScrollArrow.Render("▼")
-		pad := (panelWidth - 1) / 2
-		if pad < 0 {
-			pad = 0
-		}
-		lines[len(lines)-1] = strings.Repeat(" ", pad) + arrow
+		lines[len(lines)-1] = strings.Repeat(" ", pad) + styleScrollArrow.Render("▼")
 	}
 
 	out := make([]string, len(lines))
@@ -288,7 +282,11 @@ func renderScrollbar(lines []string, si scrollInfo, panelWidth int) []string {
 		} else {
 			ch = styleScrollTrack.Render("│")
 		}
-		out[i] = ch + line
+		fill := panelWidth - 1 - lipgloss.Width(line)
+		if fill < 0 {
+			fill = 0
+		}
+		out[i] = line + strings.Repeat(" ", fill) + ch
 	}
 	return out
 }
