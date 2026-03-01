@@ -19,6 +19,7 @@ const (
 	modeInput                  // text input overlay
 	modeConfirm                // yes/no confirmation overlay
 	modeSearch                 // search/filter input overlay
+	modeSettings               // settings screen
 )
 
 // inputAction tracks what the text input is being used for.
@@ -29,6 +30,7 @@ const (
 	inputNewSibling
 	inputNewChild
 	inputEditItem
+	inputSetDataDir
 )
 
 // confirmAction tracks what the confirm dialog is for.
@@ -46,6 +48,9 @@ type Model struct {
 	width       int
 	height      int
 	inputAction inputAction
+
+	// Settings
+	settings todo.Settings
 
 	// List picker state
 	lists      []string
@@ -86,9 +91,9 @@ func New() Model {
 	}
 }
 
-// Init implements tea.Model; loads the list of saved lists on startup.
+// Init implements tea.Model; loads settings then the list of saved lists on startup.
 func (m Model) Init() tea.Cmd {
-	return m.loadLists
+	return m.loadSettingsCmd
 }
 
 // Update implements tea.Model; routes messages to the active mode handler.
@@ -98,6 +103,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.width = msg.Width
 		m.height = msg.Height
 		return m, nil
+
+	case settingsLoadedMsg:
+		m.settings = msg.settings
+		return m, m.loadLists
 
 	case listsLoadedMsg:
 		m.lists = msg.lists
@@ -133,6 +142,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m.updateConfirm(msg)
 	case modeSearch:
 		return m.updateSearch(msg)
+	case modeSettings:
+		return m.updateSettings(msg)
 	}
 	return m, nil
 }
@@ -199,6 +210,8 @@ func (m Model) View() tea.View {
 		s = m.viewConfirm()
 	case modeSearch:
 		s = m.viewSearch()
+	case modeSettings:
+		s = m.viewSettings()
 	}
 
 	framed := styleFrame.Render(s)
@@ -267,6 +280,10 @@ func renderScrollbar(lines []string, si scrollInfo, panelWidth int) []string {
 
 // Messages
 
+type settingsLoadedMsg struct {
+	settings todo.Settings
+}
+
 type listsLoadedMsg struct {
 	lists []string
 	err   error
@@ -275,6 +292,12 @@ type listsLoadedMsg struct {
 type listOpenedMsg struct {
 	list *todo.List
 	err  error
+}
+
+// loadSettingsCmd loads settings from disk and returns a settingsLoadedMsg.
+func (m Model) loadSettingsCmd() tea.Msg {
+	s, _ := todo.LoadSettings()
+	return settingsLoadedMsg{settings: s}
 }
 
 // loadLists fetches all saved list names and returns a listsLoadedMsg.

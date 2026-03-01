@@ -34,9 +34,9 @@ func DataDir() (string, error) {
 	return dir, nil
 }
 
-// openRoot returns an os.Root scoped to the data directory.
+// openRoot returns an os.Root scoped to the list directory.
 func openRoot() (*os.Root, error) {
-	dir, err := DataDir()
+	dir, err := ListDir()
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +45,7 @@ func openRoot() (*os.Root, error) {
 
 // ListAll returns the names of all saved lists (filenames without .md).
 func ListAll() ([]string, error) {
-	dir, err := DataDir()
+	dir, err := ListDir()
 	if err != nil {
 		return nil, err
 	}

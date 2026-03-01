@@ -104,6 +104,13 @@ func (m *Model) commitInput(val string) {
 			m.save()
 			m.rebuildFlat()
 		}
+
+	case inputSetDataDir:
+		m.settings.CustomDataDir = val
+		_ = todo.SaveSettings(m.settings)
+		m.lists, _ = todo.ListAll()
+		m.listCursor = 0
+		m.listScroll = 0
 	}
 }
 
@@ -117,6 +124,8 @@ func (m Model) viewInput() string {
 		b.WriteString(m.viewListPicker())
 	case modeItems:
 		b.WriteString(m.viewItems())
+	case modeSettings:
+		b.WriteString(m.viewSettings())
 	}
 
 	b.WriteString("\n")
@@ -131,6 +140,8 @@ func (m Model) viewInput() string {
 		prompt = "New child: "
 	case inputEditItem:
 		prompt = "Edit: "
+	case inputSetDataDir:
+		prompt = "Save path: "
 	}
 	b.WriteString(stylePrompt.Render(prompt) + m.textInput.View() + "\n")
 	b.WriteString(renderHelp(inputHelp))

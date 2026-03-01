@@ -51,7 +51,15 @@ var (
 		{
 			{"n", "new"},
 			{"d", "delete"},
+			{"s", "settings"},
 			{"q", "quit"},
+		},
+	}
+	settingsHelp = [][]helpPair{
+		{
+			{"e", "set path"},
+			{"c", "clear (default)"},
+			{"esc", "back"},
 		},
 	}
 	itemsHelp = [][]helpPair{
