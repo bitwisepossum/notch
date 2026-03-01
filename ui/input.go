@@ -117,7 +117,7 @@ func (m *Model) commitInput(val string) {
 		oldName := m.lists[m.listCursor]
 		if oldName != val {
 			list, _ := todo.Load(oldName)
-			list.Name = val
+			list.Rename(val)
 			_ = todo.Save(list)
 			_ = todo.Delete(oldName)
 			m.lists, _ = todo.ListAll()

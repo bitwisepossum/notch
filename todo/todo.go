@@ -120,6 +120,11 @@ func (l *List) Search(query string) []SearchResult {
 	return results
 }
 
+// Rename changes the list's name.
+func (l *List) Rename(newName string) {
+	l.Name = newName
+}
+
 // Move relocates an item from one path to another.
 // The item (with its children) is removed from `from` and inserted at `to`.
 func (l *List) Move(from, to []int) error {
