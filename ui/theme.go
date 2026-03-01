@@ -2,6 +2,7 @@ package ui
 
 import (
 	"encoding/json"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -59,6 +60,12 @@ func LoadThemes() []Theme {
 		return themes
 	}
 
+	root, err := os.OpenRoot(td)
+	if err != nil {
+		return themes
+	}
+	defer root.Close()
+
 	for _, e := range entries {
 		if e.IsDir() {
 			continue
@@ -67,7 +74,12 @@ func LoadThemes() []Theme {
 		if !strings.HasSuffix(fname, ".json") {
 			continue
 		}
-		data, err := os.ReadFile(filepath.Join(td, fname))
+		f, err := root.Open(fname)
+		if err != nil {
+			continue
+		}
+		data, err := io.ReadAll(f)
+		f.Close()
 		if err != nil {
 			continue
 		}

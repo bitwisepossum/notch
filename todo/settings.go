@@ -2,8 +2,8 @@ package todo
 
 import (
 	"encoding/json"
+	"io"
 	"os"
-	"path/filepath"
 )
 
 // Settings holds user-configurable application settings.
@@ -21,10 +21,20 @@ func LoadSettings() (Settings, error) {
 	if err != nil {
 		return Settings{}, err
 	}
-	data, err := os.ReadFile(filepath.Join(dir, settingsFile))
+	root, err := os.OpenRoot(dir)
+	if err != nil {
+		return Settings{}, err
+	}
+	defer root.Close()
+	f, err := root.Open(settingsFile)
 	if os.IsNotExist(err) {
 		return Settings{}, nil
 	}
+	if err != nil {
+		return Settings{}, err
+	}
+	data, err := io.ReadAll(f)
+	f.Close()
 	if err != nil {
 		return Settings{}, err
 	}
@@ -45,7 +55,18 @@ func SaveSettings(s Settings) error {
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(filepath.Join(dir, settingsFile), data, 0o640)
+	root, err := os.OpenRoot(dir)
+	if err != nil {
+		return err
+	}
+	defer root.Close()
+	f, err := root.OpenFile(settingsFile, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o600)
+	if err != nil {
+		return err
+	}
+	_, err = f.Write(data)
+	f.Close()
+	return err
 }
 
 // ListDir returns the directory where list .md files are stored.
