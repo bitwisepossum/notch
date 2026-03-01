@@ -264,6 +264,14 @@ func resolveItem(items []*todo.Item, path []int) *todo.Item {
 func (m Model) viewItems() string {
 	var items strings.Builder
 
+	done := 0
+	total := len(m.flat)
+	for _, fi := range m.flat {
+		if fi.item.Done {
+			done++
+		}
+	}
+
 	if len(m.flat) == 0 {
 		items.WriteString(styleEmpty.Render("Empty list. Press a to add an item."))
 	} else {
@@ -319,7 +327,7 @@ func (m Model) viewItems() string {
 
 	var b strings.Builder
 	title := styleTitle.Render(strings.ToUpper(m.list.Name))
-	count := styleCount.Render(fmt.Sprintf("  (%d)", len(m.flat)))
+	count := styleCount.Render(fmt.Sprintf("  (%d/%d)", done, total))
 	if m.searchQuery != "" {
 		count += "  " + stylePrompt.Render("/") + styleHelpDesc.Render(m.searchQuery)
 	}
