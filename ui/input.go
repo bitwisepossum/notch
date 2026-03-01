@@ -8,6 +8,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 )
 
+// updateInput handles messages while the text input overlay is active.
 func (m Model) updateInput(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyPressMsg:
@@ -32,6 +33,7 @@ func (m Model) updateInput(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
+// commitInput applies the submitted text value based on the active inputAction.
 func (m *Model) commitInput(val string) {
 	switch m.inputAction {
 	case inputNewList:
@@ -105,6 +107,7 @@ func (m *Model) commitInput(val string) {
 	}
 }
 
+// viewInput renders the underlying screen with the text input prompt below it.
 func (m Model) viewInput() string {
 	var b strings.Builder
 
@@ -134,6 +137,7 @@ func (m Model) viewInput() string {
 	return b.String()
 }
 
+// updateConfirm handles y/n key presses in the confirmation dialog.
 func (m Model) updateConfirm(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyPressMsg:
@@ -164,6 +168,7 @@ func (m Model) updateConfirm(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
+// viewConfirm renders the underlying screen with the confirmation prompt below it.
 func (m Model) viewConfirm() string {
 	var b strings.Builder
 

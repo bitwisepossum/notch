@@ -23,6 +23,7 @@ func (m *Model) rebuildFlat() {
 	m.flattenItems(m.list.Items, nil, 0)
 }
 
+// flattenItems recursively appends items to m.flat with their path and depth.
 func (m *Model) flattenItems(items []*todo.Item, parentPath []int, depth int) {
 	for i, item := range items {
 		path := make([]int, len(parentPath)+1)
@@ -33,6 +34,7 @@ func (m *Model) flattenItems(items []*todo.Item, parentPath []int, depth int) {
 	}
 }
 
+// updateItems handles messages while the item browser is active.
 func (m Model) updateItems(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.MouseWheelMsg:
@@ -240,6 +242,7 @@ func resolveItem(items []*todo.Item, path []int) *todo.Item {
 	return current
 }
 
+// viewItems renders the item browser panel and help sidebar.
 func (m Model) viewItems() string {
 	var items strings.Builder
 

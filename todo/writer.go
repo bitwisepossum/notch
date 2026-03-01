@@ -10,6 +10,7 @@ func Write(w io.Writer, items []*Item) error {
 	return writeItems(w, items, 0)
 }
 
+// writeItems recursively writes items at the given indentation depth.
 func writeItems(w io.Writer, items []*Item, depth int) error {
 	indent := strings.Repeat("  ", depth)
 	for _, item := range items {

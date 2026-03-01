@@ -10,13 +10,14 @@ import (
 	"charm.land/lipgloss/v2"
 )
 
+// mode is the active UI screen.
 type mode int
 
 const (
-	modeListPicker mode = iota
-	modeItems
-	modeInput
-	modeConfirm
+	modeListPicker mode = iota // list selection screen
+	modeItems                  // item browser for an open list
+	modeInput                  // text input overlay
+	modeConfirm                // yes/no confirmation overlay
 )
 
 // inputAction tracks what the text input is being used for.
@@ -83,10 +84,12 @@ func New() Model {
 	}
 }
 
+// Init implements tea.Model; loads the list of saved lists on startup.
 func (m Model) Init() tea.Cmd {
 	return m.loadLists
 }
 
+// Update implements tea.Model; routes messages to the active mode handler.
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
@@ -171,6 +174,7 @@ func (m Model) panelWidth() int {
 	return max(m.width-26, 30)
 }
 
+// View implements tea.Model; renders the active screen.
 func (m Model) View() tea.View {
 	if m.width == 0 {
 		v := tea.NewView("Loading...")
@@ -266,11 +270,13 @@ type listOpenedMsg struct {
 	err  error
 }
 
+// loadLists fetches all saved list names and returns a listsLoadedMsg.
 func (m Model) loadLists() tea.Msg {
 	names, err := todo.ListAll()
 	return listsLoadedMsg{lists: names, err: err}
 }
 
+// openList returns a command that loads and parses the named list file.
 func (m Model) openList(name string) tea.Cmd {
 	return func() tea.Msg {
 		list, err := todo.Load(name)
@@ -278,6 +284,7 @@ func (m Model) openList(name string) tea.Cmd {
 	}
 }
 
+// saveAndQuit persists the open list (if any) and signals the program to exit.
 func (m Model) saveAndQuit() tea.Msg {
 	if m.list != nil {
 		_ = todo.Save(m.list)
@@ -285,6 +292,7 @@ func (m Model) saveAndQuit() tea.Msg {
 	return tea.QuitMsg{}
 }
 
+// save persists the open list to disk, silently ignoring errors.
 func (m Model) save() {
 	if m.list != nil {
 		_ = todo.Save(m.list)

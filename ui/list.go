@@ -8,6 +8,7 @@ import (
 	"charm.land/lipgloss/v2"
 )
 
+// updateListPicker handles messages while the list selection screen is active.
 func (m Model) updateListPicker(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.MouseWheelMsg:
@@ -69,6 +70,7 @@ func (m Model) updateListPicker(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
+// viewListPicker renders the list selection panel and help sidebar.
 func (m Model) viewListPicker() string {
 	var items strings.Builder
 
