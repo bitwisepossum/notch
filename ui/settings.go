@@ -152,5 +152,8 @@ func (m Model) viewSettings() string {
 	var b strings.Builder
 	b.WriteString(styleTitle.Render("SETTINGS") + "\n")
 	b.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, panel, help))
+	if m.themesDir != "" {
+		b.WriteString("\n" + styleHelpDesc.Render("themes: "+m.themesDir))
+	}
 	return b.String()
 }

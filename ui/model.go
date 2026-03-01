@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"path/filepath"
 	"strings"
 
 	"github.com/bitwisepossum/notch/todo"
@@ -56,6 +57,7 @@ type Model struct {
 	settingsCursor int    // 0=save path, 1=theme
 	defaultDataDir string // resolved OS default data dir (never changes)
 	activeListDir  string // current list storage dir (custom or default)
+	themesDir      string // <defaultDataDir>/themes (never changes)
 
 	// List picker state
 	lists      []string
@@ -113,6 +115,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.settings = msg.settings
 		m.defaultDataDir = msg.defaultDataDir
 		m.activeListDir = msg.activeListDir
+		m.themesDir = filepath.Join(msg.defaultDataDir, "themes")
 		return m, m.loadThemesCmd
 
 	case themesLoadedMsg:
