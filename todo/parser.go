@@ -25,6 +25,8 @@ func Parse(r io.Reader) ([]*Item, error) {
 			continue
 		}
 
+		// 2-space units; non-multiple indents (e.g. 1 or 3 spaces from an
+		// external editor) truncate silently rather than erroring.
 		depth := len(m[1]) / 2
 		done := m[2] == "x" || m[2] == "X"
 		text := m[3]
