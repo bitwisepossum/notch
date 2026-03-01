@@ -18,8 +18,10 @@ jobs:
 
       - name: Build
         run: |
-          GOOS=linux  GOARCH=amd64 go build -ldflags="-s -w" -o notch-linux-amd64 .
+          GOOS=linux   GOARCH=amd64 go build -ldflags="-s -w" -o notch-linux-amd64 .
           GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o notch-windows-amd64.exe .
+          GOOS=darwin  GOARCH=amd64 go build -ldflags="-s -w" -o notch-darwin-amd64 .
+          GOOS=darwin  GOARCH=arm64 go build -ldflags="-s -w" -o notch-darwin-arm64 .
 
       - name: Release
         uses: softprops/action-gh-release@v2
@@ -27,3 +29,5 @@ jobs:
           files: |
             notch-linux-amd64
             notch-windows-amd64.exe
+            notch-darwin-amd64
+            notch-darwin-arm64
