@@ -4,6 +4,13 @@ A TUI todo app. Lists are stored as Markdown files with GFM checkboxes, so they 
 
 ![notch screenshot](images/example.png)
 
+## Features
+
+- Hierarchical todos
+- Keyboard-driven interface
+- JSON-based themes
+- Lists stored as plain Markdown files
+
 ## Install
 
 ```sh
