@@ -10,6 +10,8 @@ A TUI todo app. Lists are stored as Markdown files with GFM checkboxes, so they 
 go install github.com/bitwisepossum/notch@latest
 ```
 
+See [releases](https://github.com/bitwisepossum/notch/releases) for specific versions or pre-built binaries.
+
 ## Usage
 
 ```sh
@@ -55,6 +57,10 @@ notch
 | `←` / `→` / `h` / `l` | Cycle theme |
 | `R` | Reload themes from disk |
 | `esc` / `q` | Back |
+
+## Releases
+
+See [releases](https://github.com/bitwisepossum/notch/releases) for downloads and changelog.
 
 ## Storage
 
