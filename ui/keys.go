@@ -42,10 +42,8 @@ func renderHelp(groups [][]helpPair) string {
 var (
 	listHelp = [][]helpPair{
 		{
-			{"j/k", "move"},
-			{"↑/↓", ""},
+			{"j/k ↑/↓", "move"},
 			{"PgDn/PgUp S-↑/↓", "jump"},
-			{"S-↑/↓", ""},
 			{"enter", "open"},
 		},
 		{
@@ -65,31 +63,25 @@ var (
 			{"c", "clear path"},
 		},
 		{
-			{"←/→", "theme"},
-			{"h/l", ""},
+			{"←/→ h/l", "theme"},
 			{"R", "reload themes"},
-			{"esc", "back"},
-			{"q", "back"},
+			{"esc/q", "back"},
 		},
 	}
 	itemsHelp = [][]helpPair{
 		{
-			{"j/k", "move"},
-			{"↑/↓", ""},
-			{"PgDn/PgUp", "jump"},
-			{"S-↑/↓", ""},
+			{"j/k ↑/↓", "move"},
+			{"PgDn/PgUp S-↑/↓", "jump"},
 		},
 		{
-			{"space", "toggle"},
-			{"enter", ""},
+			{"space/enter", "toggle"},
 			{"a", "add"},
 			{"A", "child"},
 			{"e", "edit"},
 			{"d", "delete"},
 		},
 		{
-			{"J/K", "reorder"},
-			{"C-↑/↓", ""},
+			{"J/K C-↑/↓", "reorder"},
 			{"tab", "indent"},
 			{"S-tab", "outdent"},
 		},
