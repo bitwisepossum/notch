@@ -377,6 +377,23 @@ func (m *Model) toggleFoldAll() {
 }
 
 // resolveItem navigates the item tree by path indices and returns the target item.
+// breadcrumb returns the › -joined names of ancestors along path (excluding the item itself).
+func breadcrumb(items []*todo.Item, path []int) string {
+	if len(path) < 2 {
+		return ""
+	}
+	var parts []string
+	slice := items
+	for _, idx := range path[:len(path)-1] {
+		if idx < 0 || idx >= len(slice) {
+			break
+		}
+		parts = append(parts, slice[idx].Text)
+		slice = slice[idx].Children
+	}
+	return strings.Join(parts, " › ")
+}
+
 func resolveItem(items []*todo.Item, path []int) *todo.Item {
 	var current *todo.Item
 	slice := items
@@ -451,6 +468,10 @@ func (m Model) viewItems() string {
 			} else if m.searchQuery != "" && isFolded {
 				// During search, dim folded items so they stand out as having hidden children.
 				text = styleCheckDone.Render(fi.item.Text)
+			}
+			if m.searchQuery != "" && len(fi.path) > 1 {
+				crumb := breadcrumb(m.list.Items, fi.path)
+				text = styleDepthDot.Render(crumb+" › ") + text
 			}
 
 			line := fmt.Sprintf("%s%s%s%s %s%s", cursor, dots, fold, check, text, suffix)
