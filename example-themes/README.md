@@ -1,18 +1,6 @@
 # Example Themes
 
-These are example theme files for notch. To use them, copy the `.json` files you want into the `themes/` subdirectory of your notch data folder.
-
-## Data folder locations
-
-The notch data folder is where your lists and settings are stored. Its location depends on your OS:
-
-| Platform | Default data folder |
-|----------|---------------------|
-| Linux    | `~/.local/share/notch/` |
-| macOS    | `~/Library/Application Support/notch/` |
-| Windows  | `%APPDATA%\notch\` |
-
-Themes go in a `themes/` subfolder inside that directory:
+Copy the `.json` files you want into the `themes/` subdirectory of your notch data folder:
 
 | Platform | Themes folder |
 |----------|---------------|
@@ -20,9 +8,7 @@ Themes go in a `themes/` subfolder inside that directory:
 | macOS    | `~/Library/Application Support/notch/themes/` |
 | Windows  | `%APPDATA%\notch\themes\` |
 
-The folder is created automatically on first launch. You can also override the data folder location from within the app via **Settings → Save path**.
-
-Then select a theme in **Settings → Theme** (`s` from the list view, then `j` to the Theme row, `←`/`→` to cycle).
+The folder is created automatically on first launch. Select a theme in **Settings → Theme** (`s` from the list view, then `←`/`→` to cycle).
 
 ## Included Examples
 
