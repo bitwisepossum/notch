@@ -272,6 +272,20 @@ func (m *Model) outdentItem() {
 	m.followItem(fi.item)
 }
 
+// subtreeCount returns the total and done counts for all descendants of item.
+func subtreeCount(item *todo.Item) (total, done int) {
+	for _, c := range item.Children {
+		total++
+		if c.Done {
+			done++
+		}
+		t, d := subtreeCount(c)
+		total += t
+		done += d
+	}
+	return
+}
+
 // foldItem collapses the current item if it has children and is expanded,
 // or moves the cursor to its parent if it is already collapsed (or has no children).
 func (m *Model) foldItem() {
@@ -374,7 +388,12 @@ func (m Model) viewItems() string {
 				text = styleDone.Render(text)
 			}
 
-			line := fmt.Sprintf("%s%s%s%s %s", cursor, dots, fold, check, text)
+			suffix := ""
+			if m.folded[pathKey(fi.path)] {
+				t, d := subtreeCount(fi.item)
+				suffix = " " + styleCount.Render(fmt.Sprintf("(%d/%d)", d, t))
+			}
+			line := fmt.Sprintf("%s%s%s%s %s%s", cursor, dots, fold, check, text, suffix)
 			if selected {
 				line = styleSelected.Render(line)
 			}
