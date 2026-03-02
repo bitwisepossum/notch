@@ -67,8 +67,26 @@ func (m Model) updateItems(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.Button == tea.MouseLeft && len(m.flat) > 0 {
 			idx := m.itemScroll + (msg.Y - headerLines)
 			if idx >= 0 && idx < len(m.flat) {
-				if idx == m.itemCursor {
-					// Click on already-selected row → toggle
+				fi := m.flat[idx]
+				// frameLeft(2) + border(1) + innerPad(1) + scrollbar(0/1) + cursor(2) + dots(2*depth)
+				scrollW := 0
+				if len(m.flat) > m.visibleRows() {
+					scrollW = 1
+				}
+				foldX := 4 + scrollW + 2 + 2*fi.depth
+				if msg.X >= foldX && msg.X < foldX+2 && len(fi.item.Children) > 0 {
+					// Click on fold indicator → toggle fold
+					key := pathKey(fi.path)
+					if m.folded[key] {
+						delete(m.folded, key)
+					} else {
+						m.folded[key] = true
+					}
+					m.itemCursor = idx
+					m.rebuildFlat()
+					m.itemCursor = min(m.itemCursor, max(len(m.flat)-1, 0))
+				} else if idx == m.itemCursor {
+					// Click on already-selected row → toggle done
 					_ = m.list.Toggle(m.flat[m.itemCursor].path)
 					m.save()
 					m.rebuildFlat()
@@ -164,6 +182,10 @@ func (m Model) updateItems(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.foldItem()
 		case "right":
 			m.unfoldItem()
+		case "f":
+			m.toggleFold()
+		case "Z":
+			m.toggleFoldAll()
 		}
 	}
 	m.itemScroll = clampScroll(m.itemCursor, m.itemScroll, m.visibleRows(), len(m.flat))
@@ -318,6 +340,40 @@ func (m *Model) unfoldItem() {
 		delete(m.folded, pathKey(fi.path))
 		m.rebuildFlat()
 	}
+}
+
+// toggleFold toggles the fold state of the current item if it has children.
+func (m *Model) toggleFold() {
+	if len(m.flat) == 0 {
+		return
+	}
+	fi := m.flat[m.itemCursor]
+	if len(fi.item.Children) == 0 {
+		return
+	}
+	key := pathKey(fi.path)
+	if m.folded[key] {
+		delete(m.folded, key)
+	} else {
+		m.folded[key] = true
+	}
+	m.rebuildFlat()
+	m.itemCursor = min(m.itemCursor, max(len(m.flat)-1, 0))
+}
+
+// toggleFoldAll folds all items with children if nothing is folded, otherwise unfolds all.
+func (m *Model) toggleFoldAll() {
+	if len(m.folded) > 0 {
+		clear(m.folded)
+	} else {
+		for _, fi := range m.flat {
+			if len(fi.item.Children) > 0 {
+				m.folded[pathKey(fi.path)] = true
+			}
+		}
+	}
+	m.rebuildFlat()
+	m.itemCursor = min(m.itemCursor, max(len(m.flat)-1, 0))
 }
 
 // resolveItem navigates the item tree by path indices and returns the target item.
