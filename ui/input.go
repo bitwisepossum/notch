@@ -206,6 +206,7 @@ func (m Model) updateConfirm(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.listCursor = len(m.lists) - 1
 				}
 			case confirmDeleteItem:
+				clear(m.folded)
 				_ = m.list.Remove(m.confirmItemPath)
 				m.save()
 				m.rebuildFlat()
