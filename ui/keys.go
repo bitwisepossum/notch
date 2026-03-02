@@ -72,6 +72,7 @@ var (
 		{
 			{"j/k ↑/↓", "move"},
 			{"PgDn/PgUp S-↑/↓", "jump"},
+			{"←/→", "fold"},
 		},
 		{
 			{"space/enter", "toggle"},

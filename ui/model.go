@@ -69,7 +69,8 @@ type Model struct {
 	flat        []flatItem
 	itemCursor  int
 	itemScroll  int
-	searchQuery string // active filter; empty means no filter
+	searchQuery string           // active filter; empty means no filter
+	folded      map[string]bool // paths of collapsed items
 
 	// Text input
 	textInput textinput.Model
@@ -96,6 +97,7 @@ func New() Model {
 	return Model{
 		mode:      modeListPicker,
 		textInput: ti,
+		folded:    make(map[string]bool),
 	}
 }
 

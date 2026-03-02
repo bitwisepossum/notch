@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/bitwisepossum/notch/todo"
@@ -9,6 +10,15 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 )
+
+// pathKey serializes a path slice to a string for use as a map key.
+func pathKey(path []int) string {
+	parts := make([]string, len(path))
+	for i, v := range path {
+		parts[i] = strconv.Itoa(v)
+	}
+	return strings.Join(parts, ",")
+}
 
 // flatItem is one row in the flattened tree view.
 type flatItem struct {
@@ -37,7 +47,9 @@ func (m *Model) flattenItems(items []*todo.Item, parentPath []int, depth int) {
 		copy(path, parentPath)
 		path[len(parentPath)] = i
 		m.flat = append(m.flat, flatItem{item: item, path: path, depth: depth})
-		m.flattenItems(item.Children, path, depth+1)
+		if !m.folded[pathKey(path)] {
+			m.flattenItems(item.Children, path, depth+1)
+		}
 	}
 }
 
@@ -148,6 +160,10 @@ func (m Model) updateItems(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.indentItem()
 		case "shift+tab":
 			m.outdentItem()
+		case "left":
+			m.foldItem()
+		case "right":
+			m.unfoldItem()
 		}
 	}
 	m.itemScroll = clampScroll(m.itemCursor, m.itemScroll, m.visibleRows(), len(m.flat))
@@ -169,6 +185,7 @@ func (m *Model) moveItem(dir int) {
 	if len(m.flat) == 0 {
 		return
 	}
+	clear(m.folded)
 	fi := m.flat[m.itemCursor]
 	path := fi.path
 	idx := path[len(path)-1]
@@ -197,6 +214,7 @@ func (m *Model) indentItem() {
 	if len(m.flat) == 0 {
 		return
 	}
+	clear(m.folded)
 	fi := m.flat[m.itemCursor]
 	path := fi.path
 	idx := path[len(path)-1]
@@ -232,6 +250,7 @@ func (m *Model) outdentItem() {
 	if len(m.flat) == 0 {
 		return
 	}
+	clear(m.folded)
 	fi := m.flat[m.itemCursor]
 	path := fi.path
 	if len(path) < 2 {
@@ -251,6 +270,40 @@ func (m *Model) outdentItem() {
 	m.save()
 	m.rebuildFlat()
 	m.followItem(fi.item)
+}
+
+// foldItem collapses the current item if it has children and is expanded,
+// or moves the cursor to its parent if it is already collapsed (or has no children).
+func (m *Model) foldItem() {
+	if len(m.flat) == 0 {
+		return
+	}
+	fi := m.flat[m.itemCursor]
+	if len(fi.item.Children) > 0 && !m.folded[pathKey(fi.path)] {
+		m.folded[pathKey(fi.path)] = true
+		m.rebuildFlat()
+		m.itemCursor = min(m.itemCursor, max(len(m.flat)-1, 0))
+	} else if fi.depth > 0 {
+		parentKey := pathKey(fi.path[:len(fi.path)-1])
+		for i, f := range m.flat {
+			if pathKey(f.path) == parentKey {
+				m.itemCursor = i
+				break
+			}
+		}
+	}
+}
+
+// unfoldItem expands the current item if it is collapsed.
+func (m *Model) unfoldItem() {
+	if len(m.flat) == 0 {
+		return
+	}
+	fi := m.flat[m.itemCursor]
+	if m.folded[pathKey(fi.path)] {
+		delete(m.folded, pathKey(fi.path))
+		m.rebuildFlat()
+	}
 }
 
 // resolveItem navigates the item tree by path indices and returns the target item.
@@ -299,6 +352,15 @@ func (m Model) viewItems() string {
 				dots = styleDepthDot.Render(strings.Repeat("· ", fi.depth))
 			}
 
+			fold := "  "
+			if len(fi.item.Children) > 0 {
+				if m.folded[pathKey(fi.path)] {
+					fold = "▶ "
+				} else {
+					fold = "▾ "
+				}
+			}
+
 			check := styleCheckOpen.Render("[ ]")
 			if fi.item.Done {
 				check = styleCheckDone.Render("[x]")
@@ -312,7 +374,7 @@ func (m Model) viewItems() string {
 				text = styleDone.Render(text)
 			}
 
-			line := fmt.Sprintf("%s%s%s %s", cursor, dots, check, text)
+			line := fmt.Sprintf("%s%s%s%s %s", cursor, dots, fold, check, text)
 			if selected {
 				line = styleSelected.Render(line)
 			}
