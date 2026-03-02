@@ -418,7 +418,12 @@ func (m Model) viewItems() string {
 
 			fold := "  "
 			if len(fi.item.Children) > 0 {
-				if m.folded[pathKey(fi.path)] {
+				if m.searchQuery != "" {
+					// During search folds are bypassed; show ▸ dimly if folded, nothing if expanded.
+					if m.folded[pathKey(fi.path)] {
+						fold = styleDepthDot.Render("▸") + " "
+					}
+				} else if m.folded[pathKey(fi.path)] {
 					fold = styleCursor.Render("▸") + " "
 				} else {
 					fold = styleDepthDot.Render("▾") + " "
@@ -436,12 +441,16 @@ func (m Model) viewItems() string {
 				suffix = " " + styleCount.Render(fmt.Sprintf("(%d/%d)", d, t))
 			}
 
+			isFolded := m.folded[pathKey(fi.path)]
 			text := fi.item.Text
 			if m.searchQuery != "" && !fi.item.Done {
 				text = highlightMatch(text, m.searchQuery)
 			}
 			if fi.item.Done {
 				text = styleDone.Render(text)
+			} else if m.searchQuery != "" && isFolded {
+				// During search, dim folded items so they stand out as having hidden children.
+				text = styleCheckDone.Render(fi.item.Text)
 			}
 
 			line := fmt.Sprintf("%s%s%s%s %s%s", cursor, dots, fold, check, text, suffix)
