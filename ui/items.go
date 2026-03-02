@@ -338,13 +338,7 @@ func resolveItem(items []*todo.Item, path []int) *todo.Item {
 func (m Model) viewItems() string {
 	var items strings.Builder
 
-	done := 0
-	total := len(m.flat)
-	for _, fi := range m.flat {
-		if fi.item.Done {
-			done++
-		}
-	}
+	total, done := subtreeCount(&todo.Item{Children: m.list.Items})
 
 	if len(m.flat) == 0 {
 		items.WriteString(styleEmpty.Render("Empty list. Press a to add an item."))
