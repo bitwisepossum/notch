@@ -363,15 +363,21 @@ func (m Model) viewItems() string {
 			fold := "  "
 			if len(fi.item.Children) > 0 {
 				if m.folded[pathKey(fi.path)] {
-					fold = "▶ "
+					fold = styleCursor.Render("▸") + " "
 				} else {
-					fold = "▾ "
+					fold = styleDepthDot.Render("▾") + " "
 				}
 			}
 
 			check := styleCheckOpen.Render("[ ]")
 			if fi.item.Done {
 				check = styleCheckDone.Render("[x]")
+			}
+
+			suffix := ""
+			if m.folded[pathKey(fi.path)] {
+				t, d := subtreeCount(fi.item)
+				suffix = " " + styleCount.Render(fmt.Sprintf("(%d/%d)", d, t))
 			}
 
 			text := fi.item.Text
@@ -382,11 +388,6 @@ func (m Model) viewItems() string {
 				text = styleDone.Render(text)
 			}
 
-			suffix := ""
-			if m.folded[pathKey(fi.path)] {
-				t, d := subtreeCount(fi.item)
-				suffix = " " + styleCount.Render(fmt.Sprintf("(%d/%d)", d, t))
-			}
 			line := fmt.Sprintf("%s%s%s%s %s%s", cursor, dots, fold, check, text, suffix)
 			if selected {
 				line = styleSelected.Render(line)
