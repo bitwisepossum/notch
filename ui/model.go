@@ -285,6 +285,21 @@ func computeScroll(scroll, total, visible int) scrollInfo {
 	return si
 }
 
+// renderProgress renders a fixed-width progress bar using the active theme characters.
+// filled portion is styled with colorAccent, empty with colorSeparator.
+func renderProgress(done, total, width int) string {
+	if total <= 0 || width <= 0 {
+		return lipgloss.NewStyle().Foreground(colorSeparator).Render(strings.Repeat(charBarEmpty, width))
+	}
+	filled := done * width / total
+	if filled > width {
+		filled = width
+	}
+	bar := lipgloss.NewStyle().Foreground(colorAccent).Render(strings.Repeat(charBarFilled, filled)) +
+		lipgloss.NewStyle().Foreground(colorSeparator).Render(strings.Repeat(charBarEmpty, width-filled))
+	return bar
+}
+
 // renderScrollbar adds arrow indicators and a left-side scrollbar to content lines.
 // lines must have exactly `visible` entries. panelWidth is used to center arrows.
 func renderScrollbar(lines []string, si scrollInfo, panelWidth int) []string {

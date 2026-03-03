@@ -517,11 +517,12 @@ func (m Model) viewItems() string {
 
 	var b strings.Builder
 	title := styleTitle.Render(strings.ToUpper(m.list.Name))
-	count := styleCount.Render(fmt.Sprintf("  (%d/%d)", done, total))
+	bar := "  " + renderProgress(done, total, 14)
+	count := "  " + styleCount.Render(fmt.Sprintf("%d/%d", done, total))
 	if m.searchQuery != "" {
 		count += "  " + stylePrompt.Render("/") + styleHelpDesc.Render(m.searchQuery)
 	}
-	b.WriteString(title + count + "\n")
+	b.WriteString(title + bar + count + "\n")
 	b.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, panel, help))
 	return b.String()
 }
