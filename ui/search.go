@@ -19,7 +19,12 @@ func (m Model) updateSearch(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.textInput.SetValue("")
 			m.mode = modeItems
 			m.rebuildFlat()
-			m.itemCursor = min(m.itemCursor, max(len(m.flat)-1, 0))
+			if m.preSearchItem != nil {
+				m.followItem(m.preSearchItem)
+				m.preSearchItem = nil
+			} else {
+				m.itemCursor = min(m.itemCursor, max(len(m.flat)-1, 0))
+			}
 			m.itemScroll = clampScroll(m.itemCursor, m.itemScroll, m.visibleRows(), len(m.flat))
 			return m, nil
 		case "enter":

@@ -69,8 +69,9 @@ type Model struct {
 	flat        []flatItem
 	itemCursor  int
 	itemScroll  int
-	searchQuery string           // active filter; empty means no filter
-	folded      map[string]bool // paths of collapsed items
+	searchQuery    string           // active filter; empty means no filter
+	preSearchItem  *todo.Item       // item under cursor when search was opened
+	folded         map[string]bool  // paths of collapsed items
 
 	// Text input
 	textInput textinput.Model

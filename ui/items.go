@@ -105,6 +105,9 @@ func (m Model) updateItems(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.mode = modeListPicker
 			return m, m.loadLists
 		case "/":
+			if len(m.flat) > 0 {
+				m.preSearchItem = m.flat[m.itemCursor].item
+			}
 			m.mode = modeSearch
 			m.textInput.SetValue(m.searchQuery)
 			return m, m.textInput.Focus()
@@ -112,7 +115,12 @@ func (m Model) updateItems(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.searchQuery != "" {
 				m.searchQuery = ""
 				m.rebuildFlat()
-				m.itemCursor = min(m.itemCursor, max(len(m.flat)-1, 0))
+				if m.preSearchItem != nil {
+					m.followItem(m.preSearchItem)
+					m.preSearchItem = nil
+				} else {
+					m.itemCursor = min(m.itemCursor, max(len(m.flat)-1, 0))
+				}
 				m.itemScroll = clampScroll(m.itemCursor, m.itemScroll, m.visibleRows(), len(m.flat))
 				return m, nil
 			}
