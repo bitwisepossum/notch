@@ -93,6 +93,10 @@ var (
 			{"esc", "back/clear"},
 			{"q", "back"},
 		},
+		{
+			{"u", "undo"},
+			{"C-r", "redo"},
+		},
 	}
 	inputHelp = [][]helpPair{
 		{

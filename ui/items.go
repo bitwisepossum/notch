@@ -87,6 +87,7 @@ func (m Model) updateItems(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.itemCursor = min(m.itemCursor, max(len(m.flat)-1, 0))
 				} else if idx == m.itemCursor {
 					// Click on already-selected row → toggle done
+					m.pushUndo()
 					_ = m.list.Toggle(m.flat[m.itemCursor].path)
 					m.save()
 					m.rebuildFlat()
@@ -142,8 +143,15 @@ func (m Model) updateItems(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.itemCursor = min(m.itemCursor+m.halfPage(), len(m.flat)-1)
 		case "pgup", "shift+up":
 			m.itemCursor = max(m.itemCursor-m.halfPage(), 0)
+		case "u":
+			m.undo()
+			return m, nil
+		case "ctrl+r":
+			m.redo()
+			return m, nil
 		case "space", "enter":
 			if len(m.flat) > 0 {
+				m.pushUndo()
 				_ = m.list.Toggle(m.flat[m.itemCursor].path)
 				m.save()
 				m.rebuildFlat()
@@ -228,6 +236,7 @@ func (m *Model) moveItem(dir int) {
 	if newIdx >= m.list.ChildCount(path[:len(path)-1]) {
 		return
 	}
+	m.pushUndo()
 
 	to := make([]int, len(path))
 	copy(to, path)
@@ -264,6 +273,7 @@ func (m *Model) indentItem() {
 	if parent == nil {
 		return
 	}
+	m.pushUndo()
 	childIdx := len(parent.Children) // append as last child
 
 	// Build destination: parentPath + childIdx
@@ -288,6 +298,7 @@ func (m *Model) outdentItem() {
 	if len(path) < 2 {
 		return // already at top level
 	}
+	m.pushUndo()
 
 	parentPath := path[:len(path)-1]
 	parentIdx := parentPath[len(parentPath)-1]

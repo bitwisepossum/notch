@@ -62,6 +62,7 @@ func (m *Model) commitInput(val string) {
 		}
 
 	case inputNewSibling:
+		m.pushUndo()
 		if len(m.flat) == 0 {
 			// Empty list — add top-level item.
 			m.list.Add(nil, val)
@@ -101,6 +102,7 @@ func (m *Model) commitInput(val string) {
 
 	case inputNewChild:
 		if len(m.flat) > 0 {
+			m.pushUndo()
 			fi := m.flat[m.itemCursor]
 			m.list.Add(fi.path, val)
 			newChild := fi.item.Children[len(fi.item.Children)-1]
@@ -111,6 +113,7 @@ func (m *Model) commitInput(val string) {
 
 	case inputEditItem:
 		if len(m.flat) > 0 {
+			m.pushUndo()
 			fi := m.flat[m.itemCursor]
 			_ = m.list.Edit(fi.path, val)
 			m.save()
@@ -206,6 +209,7 @@ func (m Model) updateConfirm(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.listCursor = len(m.lists) - 1
 				}
 			case confirmDeleteItem:
+				m.pushUndo()
 				clear(m.folded)
 				_ = m.list.Remove(m.confirmItemPath)
 				m.save()
