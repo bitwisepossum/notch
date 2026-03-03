@@ -2,6 +2,7 @@ package todo
 
 import (
 	"fmt"
+	"hash/fnv"
 	"strings"
 )
 
@@ -164,4 +165,20 @@ func (l *List) Move(from, to []int) error {
 	// Insert at destIdx.
 	*toItems = append((*toItems)[:destIdx], append([]*Item{item}, (*toItems)[destIdx:]...)...)
 	return nil
+}
+
+// Hash returns a short fingerprint of the list's structure and content,
+// covering item texts, done states, and hierarchy. Used to detect whether
+// persisted fold state is still valid for the current list.
+func (l *List) Hash() string {
+	h := fnv.New64a()
+	var walk func(items []*Item, depth int)
+	walk = func(items []*Item, depth int) {
+		for _, item := range items {
+			fmt.Fprintf(h, "%d|%v|%s\n", depth, item.Done, item.Text)
+			walk(item.Children, depth+1)
+		}
+	}
+	walk(l.Items, 0)
+	return fmt.Sprintf("%x", h.Sum64())
 }

@@ -6,10 +6,17 @@ import (
 	"os"
 )
 
+// SavedFolds holds the persisted fold state for one list.
+type SavedFolds struct {
+	Hash  string   `json:"hash"`
+	Paths []string `json:"paths"` // index-based path keys ("0", "0,2", etc.)
+}
+
 // Settings holds user-configurable application settings.
 type Settings struct {
-	CustomDataDir string `json:"custom_data_dir,omitempty"`
-	ActiveTheme   string `json:"active_theme,omitempty"` // theme Key; empty = built-in default
+	CustomDataDir string                `json:"custom_data_dir,omitempty"`
+	ActiveTheme   string                `json:"active_theme,omitempty"` // theme Key; empty = built-in default
+	FoldState     map[string]SavedFolds `json:"fold_state,omitempty"`   // list name → saved folds
 }
 
 const settingsFile = "settings.json"
