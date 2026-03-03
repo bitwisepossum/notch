@@ -7,5 +7,9 @@
   "danger":     "#CC4400",
   "separator":  "#4A2E00",
   "border":     "#A06000",
-  "done":       "#3D2600"
+  "done":       "#3D2600",
+  "check_done": "✓",
+  "check_open": "○",
+  "bar_filled": "▪",
+  "bar_empty":  "·"
 }
