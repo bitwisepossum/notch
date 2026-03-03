@@ -6,10 +6,11 @@ A TUI todo app. Lists are stored as Markdown files with GFM checkboxes, so they 
 
 ## Features
 
-- Hierarchical todos
+- Hierarchical todos with persistent fold state
 - Keyboard-driven interface
+- Fuzzy search / filter
 - JSON-based themes
-- Lists stored as plain Markdown files
+- Lists stored as plain Markdown
 
 ## Install
 
@@ -51,6 +52,8 @@ notch
 | `d` | Delete item |
 | `J` / `K` / `Ctrl+↑/↓` | Reorder item |
 | `tab` / `Shift+tab` | Indent / outdent |
+| `f` | Fold / unfold item |
+| `Z` | Fold all / unfold all |
 | `/` | Search |
 | `esc` / `q` | Back to list picker |
 
