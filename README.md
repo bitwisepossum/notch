@@ -84,6 +84,10 @@ Lists are saved as `.md` files in your platform's data directory:
 
 The save path can be changed from the Settings screen. The settings file itself (`settings.json`) always stays in the default location above.
 
+## Planned
+
+- Item deadlines
+
 ## Themes
 
 Themes are `.json` files placed in the `themes/` subfolder of the data directory. On first launch the folder is created automatically. See [`example-themes/`](example-themes/) for included examples and the full field reference.
