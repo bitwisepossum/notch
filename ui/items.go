@@ -99,6 +99,7 @@ func (m Model) updateItems(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		case "q":
 			m.save()
+			m.saveFoldState()
 			m.list = nil
 			m.flat = nil
 			m.mode = modeListPicker
@@ -116,6 +117,7 @@ func (m Model) updateItems(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, nil
 			}
 			m.save()
+			m.saveFoldState()
 			m.list = nil
 			m.flat = nil
 			m.mode = modeListPicker

@@ -139,6 +139,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.itemCursor = 0
 		m.itemScroll = 0
 		m.searchQuery = ""
+		m.folded = make(map[string]bool)
+		m.loadFoldState()
 		m.rebuildFlat()
 		return m, nil
 
@@ -371,6 +373,7 @@ func (m Model) openList(name string) tea.Cmd {
 func (m Model) saveAndQuit() tea.Msg {
 	if m.list != nil {
 		_ = todo.Save(m.list)
+		m.saveFoldState()
 	}
 	return tea.QuitMsg{}
 }
@@ -379,5 +382,53 @@ func (m Model) saveAndQuit() tea.Msg {
 func (m Model) save() {
 	if m.list != nil {
 		_ = todo.Save(m.list)
+	}
+}
+
+// saveFoldState writes the current fold state for the open list to settings.json.
+// It stores index-based path keys alongside a content hash of the list so that
+// stale state can be detected on next load.
+func (m Model) saveFoldState() {
+	if m.list == nil {
+		return
+	}
+	var paths []string
+	for k, v := range m.folded {
+		if v {
+			paths = append(paths, k)
+		}
+	}
+	s := m.settings
+	if len(paths) == 0 {
+		if s.FoldState != nil {
+			delete(s.FoldState, m.list.Name)
+		}
+	} else {
+		if s.FoldState == nil {
+			s.FoldState = make(map[string]todo.SavedFolds)
+		}
+		s.FoldState[m.list.Name] = todo.SavedFolds{
+			Hash:  m.list.Hash(),
+			Paths: paths,
+		}
+	}
+	_ = todo.SaveSettings(s)
+}
+
+// loadFoldState restores fold state for the open list from settings.
+// If the stored hash doesn't match the current list content, fold state is discarded.
+func (m *Model) loadFoldState() {
+	if m.list == nil {
+		return
+	}
+	entry, ok := m.settings.FoldState[m.list.Name]
+	if !ok || len(entry.Paths) == 0 {
+		return
+	}
+	if entry.Hash != m.list.Hash() {
+		return
+	}
+	for _, p := range entry.Paths {
+		m.folded[p] = true
 	}
 }
