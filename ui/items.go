@@ -468,9 +468,9 @@ func (m Model) viewItems() string {
 				}
 			}
 
-			check := styleCheckOpen.Render("[ ]")
+			check := styleCheckOpen.Render(charCheckOpen)
 			if fi.item.Done {
-				check = styleCheckDone.Render("[x]")
+				check = styleCheckDone.Render(charCheckDone)
 			}
 
 			suffix := ""
@@ -495,7 +495,7 @@ func (m Model) viewItems() string {
 				text = styleDepthDot.Render(crumb+" › ") + text
 			}
 
-			line := fmt.Sprintf("%s%s%s%s %s%s", cursor, dots, fold, check, text, suffix)
+			line := fmt.Sprintf("%s%s%s%s  %s%s", cursor, dots, fold, check, text, suffix)
 			if selected {
 				line = styleSelected.Render(line)
 			}
