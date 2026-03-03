@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"hash/fnv"
 	"strings"
+	"time"
 )
 
 // SearchResult pairs a matched item with its path in the tree.
@@ -16,6 +17,7 @@ type SearchResult struct {
 type Item struct {
 	Text     string
 	Done     bool
+	Deadline time.Time // zero = no deadline
 	Children []*Item
 }
 
@@ -87,6 +89,17 @@ func (l *List) Edit(path []int, newText string) error {
 		return err
 	}
 	item.Text = newText
+	return nil
+}
+
+// SetDeadline sets or clears the deadline on the item at path.
+// Pass a zero time.Time to clear an existing deadline.
+func (l *List) SetDeadline(path []int, d time.Time) error {
+	item, _, _, err := l.resolve(path)
+	if err != nil {
+		return err
+	}
+	item.Deadline = d
 	return nil
 }
 
@@ -205,6 +218,7 @@ func cloneItems(items []*Item) []*Item {
 		out[i] = &Item{
 			Text:     item.Text,
 			Done:     item.Done,
+			Deadline: item.Deadline,
 			Children: cloneItems(item.Children),
 		}
 	}
@@ -219,7 +233,7 @@ func (l *List) Hash() string {
 	var walk func(items []*Item, depth int)
 	walk = func(items []*Item, depth int) {
 		for _, item := range items {
-			fmt.Fprintf(h, "%d|%v|%s\n", depth, item.Done, item.Text)
+			fmt.Fprintf(h, "%d|%v|%s|%s\n", depth, item.Done, item.Text, item.Deadline.Format("2006-01-02"))
 			walk(item.Children, depth+1)
 		}
 	}

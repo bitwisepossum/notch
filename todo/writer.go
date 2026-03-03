@@ -18,7 +18,11 @@ func writeItems(w io.Writer, items []*Item, depth int) error {
 		if item.Done {
 			mark = "x"
 		}
-		line := indent + "- [" + mark + "] " + item.Text + "\n"
+		deadline := ""
+		if !item.Deadline.IsZero() {
+			deadline = " 📅 " + item.Deadline.UTC().Format("2006-01-02")
+		}
+		line := indent + "- [" + mark + "] " + item.Text + deadline + "\n"
 		if _, err := io.WriteString(w, line); err != nil {
 			return err
 		}

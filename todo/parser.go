@@ -4,13 +4,18 @@ import (
 	"bufio"
 	"io"
 	"regexp"
+	"time"
 )
 
 var itemRe = regexp.MustCompile(`^(\s*)- \[([ xX])\] (.+)$`)
 
+// deadlineRe matches the Obsidian Tasks deadline suffix: 📅 YYYY-MM-DD
+var deadlineRe = regexp.MustCompile(`\s*📅\s*(\d{4}-\d{2}-\d{2})\s*$`)
+
 // Parse reads Markdown from r and returns a slice of top-level Items.
 // It recognizes GFM checkbox lines with 2-space indentation for nesting.
 // Non-matching lines (headings, blanks) are silently skipped.
+// Obsidian Tasks deadline suffixes (📅 YYYY-MM-DD) are parsed and stripped from Text.
 func Parse(r io.Reader) ([]*Item, error) {
 	scanner := bufio.NewScanner(r)
 
@@ -31,7 +36,16 @@ func Parse(r io.Reader) ([]*Item, error) {
 		done := m[2] == "x" || m[2] == "X"
 		text := m[3]
 
-		item := &Item{Text: text, Done: done}
+		// Extract and strip deadline suffix if present.
+		var deadline time.Time
+		if dm := deadlineRe.FindStringSubmatch(text); dm != nil {
+			if t, err := time.Parse("2006-01-02", dm[1]); err == nil {
+				deadline = t
+			}
+			text = deadlineRe.ReplaceAllString(text, "")
+		}
+
+		item := &Item{Text: text, Done: done, Deadline: deadline}
 
 		// Ensure the stack is deep enough. If we jumped deeper than expected
 		// (malformed indent), clamp to the deepest available parent.

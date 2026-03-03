@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestRoundTrip_Simple(t *testing.T) {
@@ -177,5 +178,46 @@ func TestParse_MalformedIndent(t *testing.T) {
 	// The over-indented item should be clamped as a child of Parent
 	if len(items[0].Children) != 1 {
 		t.Fatalf("expected 1 child, got %d", len(items[0].Children))
+	}
+}
+
+func TestRoundTrip_Deadline(t *testing.T) {
+	input := "- [ ] Buy groceries 📅 2025-12-31\n- [x] Done task 📅 2024-01-15\n"
+	items, err := Parse(strings.NewReader(input))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(items) != 2 {
+		t.Fatalf("expected 2 items, got %d", len(items))
+	}
+	if items[0].Text != "Buy groceries" {
+		t.Errorf("expected text %q, got %q", "Buy groceries", items[0].Text)
+	}
+	want := time.Date(2025, 12, 31, 0, 0, 0, 0, time.UTC)
+	if !items[0].Deadline.Equal(want) {
+		t.Errorf("expected deadline %v, got %v", want, items[0].Deadline)
+	}
+	if items[1].Text != "Done task" {
+		t.Errorf("expected text %q, got %q", "Done task", items[1].Text)
+	}
+
+	// Round-trip: written form should match input.
+	var buf bytes.Buffer
+	if err := Write(&buf, items); err != nil {
+		t.Fatal(err)
+	}
+	if buf.String() != input {
+		t.Errorf("round-trip mismatch:\ngot:\n%s\nwant:\n%s", buf.String(), input)
+	}
+}
+
+func TestParse_NoDeadline(t *testing.T) {
+	input := "- [ ] Plain item\n"
+	items, err := Parse(strings.NewReader(input))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !items[0].Deadline.IsZero() {
+		t.Errorf("expected zero deadline, got %v", items[0].Deadline)
 	}
 }

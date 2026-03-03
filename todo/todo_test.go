@@ -1,6 +1,9 @@
 package todo
 
-import "testing"
+import (
+	"testing"
+	"time"
+)
 
 func newTestList() *List {
 	return &List{
@@ -296,5 +299,41 @@ func TestHash_EmptyList(t *testing.T) {
 	l2 := &List{Name: "other"}
 	if l.Hash() != l2.Hash() {
 		t.Error("two empty lists should have the same hash")
+	}
+}
+
+func TestSetDeadline(t *testing.T) {
+	l := newTestList()
+	d := time.Date(2025, 6, 15, 0, 0, 0, 0, time.UTC)
+
+	if err := l.SetDeadline([]int{0}, d); err != nil {
+		t.Fatal(err)
+	}
+	if !l.Items[0].Deadline.Equal(d) {
+		t.Errorf("expected deadline %v, got %v", d, l.Items[0].Deadline)
+	}
+
+	// Clear the deadline.
+	if err := l.SetDeadline([]int{0}, time.Time{}); err != nil {
+		t.Fatal(err)
+	}
+	if !l.Items[0].Deadline.IsZero() {
+		t.Error("expected deadline to be cleared")
+	}
+}
+
+func TestSetDeadline_InvalidPath(t *testing.T) {
+	l := newTestList()
+	if err := l.SetDeadline([]int{9}, time.Now()); err == nil {
+		t.Fatal("expected error for invalid path")
+	}
+}
+
+func TestHash_ChangesOnDeadline(t *testing.T) {
+	l := newTestList()
+	before := l.Hash()
+	_ = l.SetDeadline([]int{0}, time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC))
+	if l.Hash() == before {
+		t.Error("hash did not change after setting deadline")
 	}
 }
