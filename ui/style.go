@@ -16,6 +16,14 @@ var (
 	colorDone      = lipgloss.Color("#3A4818")
 )
 
+// UI characters — overridden by the active theme.
+var (
+	charCheckDone = "✓"
+	charCheckOpen = "○"
+	charBarFilled = "━"
+	charBarEmpty  = "─"
+)
+
 var (
 	styleTitle       = lipgloss.NewStyle().Bold(true).Foreground(colorAccent)
 	styleCursor      = lipgloss.NewStyle().Bold(true).Foreground(colorAccent)
@@ -50,6 +58,17 @@ func applyTheme(t Theme) {
 	colorSeparator = lipgloss.Color(t.Separator)
 	colorBorder = lipgloss.Color(t.Border)
 	colorDone = lipgloss.Color(t.Done)
+
+	orDefault := func(s, def string) string {
+		if s != "" {
+			return s
+		}
+		return def
+	}
+	charCheckDone = orDefault(t.CheckDone, "✓")
+	charCheckOpen = orDefault(t.CheckOpen, "○")
+	charBarFilled = orDefault(t.BarFilled, "━")
+	charBarEmpty = orDefault(t.BarEmpty, "─")
 
 	styleTitle = lipgloss.NewStyle().Bold(true).Foreground(colorAccent)
 	styleCursor = lipgloss.NewStyle().Bold(true).Foreground(colorAccent)

@@ -22,6 +22,11 @@ type Theme struct {
 	Separator string `json:"separator"`
 	Border    string `json:"border"`
 	Done      string `json:"done"`
+	// Optional UI characters; omit to use built-in defaults.
+	CheckDone string `json:"check_done,omitempty"` // default: "✓"
+	CheckOpen string `json:"check_open,omitempty"` // default: "○"
+	BarFilled string `json:"bar_filled,omitempty"` // default: "━"
+	BarEmpty  string `json:"bar_empty,omitempty"`  // default: "─"
 }
 
 // DefaultTheme is the built-in Nokia LCD-inspired green palette.
@@ -36,6 +41,10 @@ var DefaultTheme = Theme{
 	Separator: "#405010",
 	Border:    "#708830",
 	Done:      "#3A4818",
+	CheckDone: "✓",
+	CheckOpen: "○",
+	BarFilled: "━",
+	BarEmpty:  "─",
 }
 
 const themesSubdir = "themes"
