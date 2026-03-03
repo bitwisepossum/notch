@@ -11,9 +11,10 @@ import (
 )
 
 const (
-	settingsRowPath  = 0
-	settingsRowTheme = 1
-	settingsRowCount = 2
+	settingsRowPath    = 0
+	settingsRowTheme   = 1
+	settingsRowCascade = 2
+	settingsRowCount   = 3
 )
 
 // updateSettings handles messages while the settings screen is active.
@@ -34,6 +35,9 @@ func (m Model) updateSettings(msg tea.Msg) (tea.Model, tea.Cmd) {
 						return m, m.textInput.Focus()
 					case settingsRowTheme:
 						m.cycleTheme(1)
+					case settingsRowCascade:
+						m.settings.CascadeDone = !m.settings.CascadeDone
+						_ = todo.SaveSettings(m.settings)
 					}
 				} else {
 					m.settingsCursor = row
@@ -62,6 +66,9 @@ func (m Model) updateSettings(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, m.textInput.Focus()
 			case settingsRowTheme:
 				m.cycleTheme(1)
+			case settingsRowCascade:
+				m.settings.CascadeDone = !m.settings.CascadeDone
+				_ = todo.SaveSettings(m.settings)
 			}
 
 		case "c":
@@ -133,6 +140,15 @@ func (m Model) viewSettings() string {
 				}
 				total := len(m.themes)
 				return fmt.Sprintf("%s%s  %s", t.Name, file, styleHelpDesc.Render(fmt.Sprintf("[%d/%d]", idx+1, total)))
+			}(),
+		},
+		{
+			label: "Cascade done",
+			value: func() string {
+				if m.settings.CascadeDone {
+					return styleCheckOpen.Render("on")
+				}
+				return styleHelpDesc.Render("off")
 			}(),
 		},
 	}

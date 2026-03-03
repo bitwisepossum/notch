@@ -70,7 +70,7 @@ var (
 			{"j/k", "move"},
 		}},
 		{pairs: []helpPair{
-			{"enter/e", "set path"},
+			{"enter/e", "activate"},
 			{"c", "clear path"},
 		}},
 		{pairs: []helpPair{

@@ -100,6 +100,25 @@ func (l *List) Toggle(path []int) error {
 	return nil
 }
 
+// ToggleCascade flips Done on the item at path, then sets all descendants to match.
+func (l *List) ToggleCascade(path []int) error {
+	item, _, _, err := l.resolve(path)
+	if err != nil {
+		return err
+	}
+	item.Done = !item.Done
+	setDoneRecursive(item.Children, item.Done)
+	return nil
+}
+
+// setDoneRecursive sets Done on all items in the slice and their descendants.
+func setDoneRecursive(items []*Item, done bool) {
+	for _, item := range items {
+		item.Done = done
+		setDoneRecursive(item.Children, done)
+	}
+}
+
 // Search returns all items whose text contains query (case-insensitive).
 // Results are ordered depth-first. An empty query matches every item.
 func (l *List) Search(query string) []SearchResult {

@@ -17,6 +17,7 @@ type Settings struct {
 	CustomDataDir string                `json:"custom_data_dir,omitempty"`
 	ActiveTheme   string                `json:"active_theme,omitempty"` // theme Key; empty = built-in default
 	FoldState     map[string]SavedFolds `json:"fold_state,omitempty"`   // list name → saved folds
+	CascadeDone   bool                  `json:"cascade_done,omitempty"` // marking done also marks all children
 }
 
 const settingsFile = "settings.json"

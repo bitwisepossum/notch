@@ -88,7 +88,7 @@ func (m Model) updateItems(msg tea.Msg) (tea.Model, tea.Cmd) {
 				} else if idx == m.itemCursor {
 					// Click on already-selected row → toggle done
 					m.pushUndo()
-					_ = m.list.Toggle(m.flat[m.itemCursor].path)
+					m.toggleDone(m.flat[m.itemCursor].path)
 					m.save()
 					m.rebuildFlat()
 				} else {
@@ -152,7 +152,7 @@ func (m Model) updateItems(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "space", "enter":
 			if len(m.flat) > 0 {
 				m.pushUndo()
-				_ = m.list.Toggle(m.flat[m.itemCursor].path)
+				m.toggleDone(m.flat[m.itemCursor].path)
 				m.save()
 				m.rebuildFlat()
 			}
@@ -208,6 +208,15 @@ func (m Model) updateItems(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 	m.itemScroll = clampScroll(m.itemCursor, m.itemScroll, m.visibleRows(), len(m.flat))
 	return m, nil
+}
+
+// toggleDone toggles the done state of the item at path, cascading to children if enabled.
+func (m *Model) toggleDone(path []int) {
+	if m.settings.CascadeDone {
+		_ = m.list.ToggleCascade(path)
+	} else {
+		_ = m.list.Toggle(path)
+	}
 }
 
 // followItem updates the cursor to track a specific item after the flat list is rebuilt.
