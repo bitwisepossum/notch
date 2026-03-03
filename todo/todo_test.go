@@ -250,3 +250,51 @@ func TestClone_Empty(t *testing.T) {
 		t.Error("empty clone mismatch")
 	}
 }
+
+func TestHash_Deterministic(t *testing.T) {
+	l := newTestList()
+	h1, h2 := l.Hash(), l.Hash()
+	if h1 != h2 {
+		t.Error("hash is not deterministic")
+	}
+}
+
+func TestHash_ChangesOnTextEdit(t *testing.T) {
+	l := newTestList()
+	before := l.Hash()
+	_ = l.Edit([]int{0}, "Changed")
+	if l.Hash() == before {
+		t.Error("hash did not change after editing item text")
+	}
+}
+
+func TestHash_ChangesOnToggle(t *testing.T) {
+	l := newTestList()
+	before := l.Hash()
+	_ = l.Toggle([]int{0})
+	if l.Hash() == before {
+		t.Error("hash did not change after toggling done state")
+	}
+}
+
+func TestHash_ChangesOnStructure(t *testing.T) {
+	l := newTestList()
+	before := l.Hash()
+	l.Add(nil, "New item")
+	if l.Hash() == before {
+		t.Error("hash did not change after adding an item")
+	}
+}
+
+func TestHash_EmptyList(t *testing.T) {
+	l := &List{Name: "empty"}
+	h := l.Hash()
+	if h == "" {
+		t.Error("hash of empty list should not be empty string")
+	}
+	// A second empty list should produce the same hash regardless of name.
+	l2 := &List{Name: "other"}
+	if l.Hash() != l2.Hash() {
+		t.Error("two empty lists should have the same hash")
+	}
+}
