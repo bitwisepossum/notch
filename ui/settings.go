@@ -107,7 +107,11 @@ func (m *Model) cycleTheme(delta int) {
 	t := m.themes[idx]
 	m.settings.ActiveTheme = t.Key
 	_ = todo.SaveSettings(m.settings)
-	applyTheme(t)
+	if t.Error != "" {
+		applyTheme(DefaultTheme)
+	} else {
+		applyTheme(t)
+	}
 }
 
 // viewSettings renders the settings panel and help sidebar.
@@ -134,12 +138,16 @@ func (m Model) viewSettings() string {
 				if idx < len(m.themes) {
 					t = m.themes[idx]
 				}
+				total := len(m.themes)
+				pos := styleHelpDesc.Render(fmt.Sprintf("[%d/%d]", idx+1, total))
+				if t.Error != "" {
+					return styleConfirm.Render(t.Key+".json") + "  " + styleHelpDesc.Render(t.Error) + "  " + pos
+				}
 				file := ""
 				if t.Key != "" {
 					file = styleHelpDesc.Render("  (" + t.Key + ".json)")
 				}
-				total := len(m.themes)
-				return fmt.Sprintf("%s%s  %s", t.Name, file, styleHelpDesc.Render(fmt.Sprintf("[%d/%d]", idx+1, total)))
+				return fmt.Sprintf("%s%s  %s", t.Name, file, pos)
 			}(),
 		},
 		{

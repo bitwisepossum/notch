@@ -370,7 +370,11 @@ func (m Model) loadThemesCmd() tea.Msg {
 func (m *Model) applyActiveTheme() {
 	for _, t := range m.themes {
 		if t.Key == m.settings.ActiveTheme {
-			applyTheme(t)
+			if t.Error != "" {
+				applyTheme(DefaultTheme)
+			} else {
+				applyTheme(t)
+			}
 			return
 		}
 	}
