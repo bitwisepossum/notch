@@ -39,7 +39,7 @@ func renderHelp(groups []helpGroup) string {
 			lines = append(lines, "")
 		}
 		if g.header != "" {
-			lines = append(lines, styleCount.Render(g.header))
+			lines = append(lines, styleCount.Bold(true).Render(g.header))
 		}
 		for _, p := range g.pairs {
 			descPad := strings.Repeat(" ", maxDesc-lipgloss.Width(p.desc))
