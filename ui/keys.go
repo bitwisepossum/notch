@@ -12,13 +12,21 @@ type helpPair struct {
 	desc string
 }
 
-// renderHelp builds a vertical help sidebar: one pair per line, groups separated
-// by a blank line. Format is desc (muted) then key (accent), columns aligned.
-func renderHelp(groups [][]helpPair) string {
+// helpGroup is a named group of helpPairs. header is optional; empty means
+// no header, just a blank-line separator between groups.
+type helpGroup struct {
+	header string
+	pairs  []helpPair
+}
+
+// renderHelp builds a vertical help sidebar from a slice of helpGroups.
+// Groups with a non-empty header show it in a muted style above their pairs.
+// Groups are separated by a blank line.
+func renderHelp(groups []helpGroup) string {
 	// Compute max desc width across all pairs.
 	maxDesc := 0
 	for _, g := range groups {
-		for _, p := range g {
+		for _, p := range g.pairs {
 			if w := lipgloss.Width(p.desc); w > maxDesc {
 				maxDesc = w
 			}
@@ -30,7 +38,10 @@ func renderHelp(groups [][]helpPair) string {
 		if i > 0 {
 			lines = append(lines, "")
 		}
-		for _, p := range g {
+		if g.header != "" {
+			lines = append(lines, styleCount.Render(g.header))
+		}
+		for _, p := range g.pairs {
 			descPad := strings.Repeat(" ", maxDesc-lipgloss.Width(p.desc))
 			line := styleHelpDesc.Render(p.desc+descPad) + "  " + styleHelpKey.Render(p.keys)
 			lines = append(lines, line)
@@ -40,68 +51,68 @@ func renderHelp(groups [][]helpPair) string {
 }
 
 var (
-	listHelp = [][]helpPair{
-		{
+	listHelp = []helpGroup{
+		{pairs: []helpPair{
 			{"j/k ↑/↓", "move"},
 			{"PgDn/PgUp S-↑/↓", "jump"},
 			{"enter", "open"},
-		},
-		{
+		}},
+		{pairs: []helpPair{
 			{"n", "new"},
 			{"r", "rename"},
 			{"d", "delete"},
 			{"s", "settings"},
 			{"q", "quit"},
-		},
+		}},
 	}
-	settingsHelp = [][]helpPair{
-		{
+	settingsHelp = []helpGroup{
+		{pairs: []helpPair{
 			{"j/k", "move"},
-		},
-		{
+		}},
+		{pairs: []helpPair{
 			{"enter/e", "set path"},
 			{"c", "clear path"},
-		},
-		{
+		}},
+		{pairs: []helpPair{
 			{"←/→ h/l", "theme"},
 			{"R", "reload themes"},
 			{"esc/q", "back"},
-		},
+		}},
 	}
-	itemsHelp = [][]helpPair{
-		{
+	itemsHelp = []helpGroup{
+		{header: "navigate", pairs: []helpPair{
 			{"j/k ↑/↓", "move"},
 			{"PgDn/PgUp S-↑/↓", "jump"},
 			{"←/→", "fold"},
-		{"f", "toggle fold"},
-		{"Z", "fold all"},
-		},
-		{
+			{"f", "toggle fold"},
+			{"Z", "fold all"},
+		}},
+		{header: "edit", pairs: []helpPair{
 			{"space/enter", "toggle"},
 			{"a", "add"},
 			{"A", "child"},
 			{"e", "edit"},
 			{"d", "delete"},
-		},
-		{
+		}},
+		{header: "move", pairs: []helpPair{
 			{"J/K C-↑/↓", "reorder"},
 			{"tab", "indent"},
 			{"S-tab", "outdent"},
-		},
-		{
+		}},
+		{header: "search", pairs: []helpPair{
 			{"/", "search"},
 			{"esc", "back/clear"},
 			{"q", "back"},
-		},
-		{
+		}},
+		{header: "history", pairs: []helpPair{
 			{"u", "undo"},
 			{"C-r", "redo"},
-		},
+		}},
 	}
-	inputHelp = [][]helpPair{
-		{
+	inputHelp = []helpGroup{
+		{pairs: []helpPair{
 			{"enter", "confirm"},
 			{"esc", "cancel"},
-		},
+		}},
 	}
 )

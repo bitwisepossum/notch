@@ -81,10 +81,10 @@ func highlightMatch(text, query string) string {
 	return text[:idx] + styleHelpKey.Render(text[idx:end]) + text[end:]
 }
 
-var searchHelp = [][]helpPair{
-	{
+var searchHelp = []helpGroup{
+	{pairs: []helpPair{
 		{"↑/↓", "navigate"},
 		{"enter", "confirm"},
 		{"esc", "cancel"},
-	},
+	}},
 }
