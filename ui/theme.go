@@ -79,7 +79,7 @@ func LoadThemes() []Theme {
 			continue
 		}
 		data, err := io.ReadAll(f)
-		f.Close()
+		_ = f.Close()
 		if err != nil {
 			continue
 		}

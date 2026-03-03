@@ -40,8 +40,8 @@ func LoadSettings() (Settings, error) {
 	if err != nil {
 		return Settings{}, err
 	}
+	defer f.Close()
 	data, err := io.ReadAll(f)
-	f.Close()
 	if err != nil {
 		return Settings{}, err
 	}
@@ -72,7 +72,9 @@ func SaveSettings(s Settings) error {
 		return err
 	}
 	_, err = f.Write(data)
-	f.Close()
+	if closeErr := f.Close(); err == nil {
+		err = closeErr
+	}
 	return err
 }
 
