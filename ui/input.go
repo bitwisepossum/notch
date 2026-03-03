@@ -267,5 +267,17 @@ func (m Model) viewConfirm() string {
 	innerWidth := max(lipgloss.Width(msg), lipgloss.Width(hint))
 	popup := stylePanel.Width(innerWidth).Render(msg + "\n\n" + hint)
 
-	return overlayCenter(bg, popup, m.width, m.height)
+	// Compose layers: background + popup centered within the panel area.
+	popupW := lipgloss.Width(popup)
+	popupH := lipgloss.Height(popup)
+	// The panel occupies frameLeft(2) + border(1) + panelWidth + border(1).
+	// Center the popup within that region.
+	panelArea := 2 + 2 + m.panelWidth()
+	bgLayer := lipgloss.NewLayer(bg)
+	fgLayer := lipgloss.NewLayer(popup).
+		X((panelArea - popupW) / 2).
+		Y((m.height - popupH) / 2).
+		Z(1)
+
+	return lipgloss.NewCompositor(bgLayer, fgLayer).Render()
 }
