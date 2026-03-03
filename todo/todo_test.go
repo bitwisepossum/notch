@@ -211,3 +211,42 @@ func TestSearch_EmptyQuery(t *testing.T) {
 		t.Fatalf("expected 4 results, got %d", len(results))
 	}
 }
+
+func TestClone_DeepCopy(t *testing.T) {
+	l := newTestList()
+	c := l.Clone()
+
+	if c.Name != l.Name {
+		t.Errorf("name: got %q, want %q", c.Name, l.Name)
+	}
+	if len(c.Items) != len(l.Items) {
+		t.Fatalf("items: got %d, want %d", len(c.Items), len(l.Items))
+	}
+	if c.Items[0].Text != "First" {
+		t.Errorf("got %q, want 'First'", c.Items[0].Text)
+	}
+	if len(c.Items[0].Children) != 2 {
+		t.Fatalf("children: got %d, want 2", len(c.Items[0].Children))
+	}
+	if !c.Items[0].Children[1].Done {
+		t.Error("expected Child B clone to be Done")
+	}
+
+	// Mutation isolation: changing clone does not affect original.
+	c.Items[0].Text = "Modified"
+	c.Items[0].Children[0].Text = "Modified Child"
+	if l.Items[0].Text != "First" {
+		t.Error("original mutated after clone change")
+	}
+	if l.Items[0].Children[0].Text != "Child A" {
+		t.Error("original child mutated after clone change")
+	}
+}
+
+func TestClone_Empty(t *testing.T) {
+	l := &List{Name: "empty"}
+	c := l.Clone()
+	if c.Name != "empty" || len(c.Items) != 0 {
+		t.Error("empty clone mismatch")
+	}
+}

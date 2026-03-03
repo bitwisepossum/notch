@@ -167,6 +167,31 @@ func (l *List) Move(from, to []int) error {
 	return nil
 }
 
+// Clone returns a deep copy of the list, duplicating all items and children.
+// Used by the UI undo/redo system to snapshot list state before mutations.
+func (l *List) Clone() *List {
+	return &List{
+		Name:  l.Name,
+		Items: cloneItems(l.Items),
+	}
+}
+
+// cloneItems recursively copies a slice of items.
+func cloneItems(items []*Item) []*Item {
+	if len(items) == 0 {
+		return nil
+	}
+	out := make([]*Item, len(items))
+	for i, item := range items {
+		out[i] = &Item{
+			Text:     item.Text,
+			Done:     item.Done,
+			Children: cloneItems(item.Children),
+		}
+	}
+	return out
+}
+
 // Hash returns a short fingerprint of the list's structure and content,
 // covering item texts, done states, and hierarchy. Used to detect whether
 // persisted fold state is still valid for the current list.
