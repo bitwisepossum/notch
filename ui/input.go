@@ -3,6 +3,7 @@ package ui
 import (
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/bitwisepossum/notch/todo"
 
@@ -18,7 +19,8 @@ func (m Model) updateInput(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "enter":
 			val := strings.TrimSpace(m.textInput.Value())
 			m.inputErr = ""
-			if val != "" {
+			// inputSetDeadline allows empty val (clears the deadline).
+			if val != "" || m.inputAction == inputSetDeadline {
 				m.commitInput(val)
 			}
 			if m.inputErr == "" {
@@ -163,6 +165,25 @@ func (m *Model) commitInput(val string) {
 				}
 			}
 		}
+
+	case inputSetDeadline:
+		if len(m.flat) == 0 {
+			return
+		}
+		fi := m.flat[m.itemCursor]
+		m.pushUndo()
+		if val == "" {
+			_ = m.list.SetDeadline(fi.path, time.Time{})
+		} else {
+			d, err := time.Parse("2006-01-02", val)
+			if err != nil {
+				m.inputErr = "use YYYY-MM-DD"
+				return
+			}
+			_ = m.list.SetDeadline(fi.path, d)
+		}
+		m.save()
+		m.rebuildFlat()
 	}
 }
 
@@ -196,6 +217,8 @@ func (m Model) viewInput() string {
 		prompt = "Save path: "
 	case inputRenameList:
 		prompt = "Rename: "
+	case inputSetDeadline:
+		prompt = "Deadline (YYYY-MM-DD, empty=clear): "
 	}
 	errStr := ""
 	if m.inputErr != "" {

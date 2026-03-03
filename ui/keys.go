@@ -92,6 +92,7 @@ var (
 			{"a", "add"},
 			{"A", "child"},
 			{"e", "edit"},
+			{"t", "deadline"},
 			{"d", "delete"},
 		}},
 		{header: "move", pairs: []helpPair{

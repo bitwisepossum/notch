@@ -32,6 +32,7 @@ const (
 	inputEditItem
 	inputSetDataDir
 	inputRenameList
+	inputSetDeadline
 )
 
 // confirmAction tracks what the confirm dialog is for.

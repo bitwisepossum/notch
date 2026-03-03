@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/bitwisepossum/notch/todo"
 
@@ -187,6 +188,19 @@ func (m Model) updateItems(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.confirmKind = confirmDeleteItem
 				m.confirmItemPath = make([]int, len(fi.path))
 				copy(m.confirmItemPath, fi.path)
+			}
+		case "t":
+			if len(m.flat) > 0 {
+				m.prevMode = modeItems
+				m.mode = modeInput
+				m.inputAction = inputSetDeadline
+				fi := m.flat[m.itemCursor]
+				if !fi.item.Deadline.IsZero() {
+					m.textInput.SetValue(fi.item.Deadline.Format("2006-01-02"))
+				} else {
+					m.textInput.SetValue("")
+				}
+				return m, m.textInput.Focus()
 			}
 		case "J", "ctrl+down":
 			m.moveItem(1)
@@ -488,6 +502,25 @@ func (m Model) viewItems() string {
 				suffix = " " + styleCount.Render(fmt.Sprintf("(%d/%d)", d, t))
 			}
 
+			deadlineBadge := ""
+			if !fi.item.Deadline.IsZero() {
+				dateStr := fi.item.Deadline.Format("2006-01-02")
+				today := time.Now().Truncate(24 * time.Hour)
+				dl := fi.item.Deadline.UTC().Truncate(24 * time.Hour)
+				var ds lipgloss.Style
+				switch {
+				case fi.item.Done:
+					ds = styleCheckDone
+				case dl.Before(today):
+					ds = styleConfirm
+				case dl.Equal(today):
+					ds = stylePrompt
+				default:
+					ds = styleHelpDesc
+				}
+				deadlineBadge = "  " + ds.Render("📅 "+dateStr)
+			}
+
 			isFolded := m.folded[pathKey(fi.path)]
 			text := fi.item.Text
 			if m.searchQuery != "" && !fi.item.Done {
@@ -504,7 +537,7 @@ func (m Model) viewItems() string {
 				text = styleDepthDot.Render(crumb+" › ") + text
 			}
 
-			line := fmt.Sprintf("%s%s%s%s  %s%s", cursor, dots, fold, check, text, suffix)
+			line := fmt.Sprintf("%s%s%s%s  %s%s%s", cursor, dots, fold, check, text, deadlineBadge, suffix)
 			if selected {
 				line = styleSelected.Render(line)
 			}
