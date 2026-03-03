@@ -197,8 +197,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 const headerLines = 3
 
 // visibleRows returns how many content rows fit in the panel.
+// Layout: 1 frame top + 1 title + 1 panel top border + content + 1 panel bottom border + 1 status bar + 1 frame bottom = height - 8 for items.
+// List picker and settings share the same count (no status bar, but close enough in practice).
 func (m Model) visibleRows() int {
-	return max(m.height-7, 1)
+	return max(m.height-8, 1)
 }
 
 // halfPage returns the half-page jump distance.
@@ -291,10 +293,7 @@ func renderProgress(done, total, width int) string {
 	if total <= 0 || width <= 0 {
 		return lipgloss.NewStyle().Foreground(colorSeparator).Render(strings.Repeat(charBarEmpty, width))
 	}
-	filled := done * width / total
-	if filled > width {
-		filled = width
-	}
+	filled := min(done*width/total, width)
 	bar := lipgloss.NewStyle().Foreground(colorAccent).Render(strings.Repeat(charBarFilled, filled)) +
 		lipgloss.NewStyle().Foreground(colorSeparator).Render(strings.Repeat(charBarEmpty, width-filled))
 	return bar
@@ -307,10 +306,7 @@ func renderScrollbar(lines []string, si scrollInfo, panelWidth int) []string {
 		return lines // no overflow, no track
 	}
 
-	pad := (panelWidth - 1) / 2
-	if pad < 0 {
-		pad = 0
-	}
+	pad := max((panelWidth-1)/2, 0)
 	if si.showUp {
 		lines[0] = strings.Repeat(" ", pad) + styleScrollArrow.Render("▲")
 	}

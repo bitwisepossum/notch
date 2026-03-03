@@ -513,6 +513,8 @@ func (m Model) viewItems() string {
 	}
 
 	panel := stylePanel.Width(m.panelWidth()).Render(items.String())
+	remaining := total - done
+	statusBar := styleHelpDesc.Render(fmt.Sprintf("  %d done · %d remaining", done, remaining))
 	help := lipgloss.NewStyle().PaddingTop(1).PaddingLeft(2).Render(renderHelp(itemsHelp))
 
 	var b strings.Builder
@@ -523,6 +525,6 @@ func (m Model) viewItems() string {
 		count += "  " + stylePrompt.Render("/") + styleHelpDesc.Render(m.searchQuery)
 	}
 	b.WriteString(title + bar + count + "\n")
-	b.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, panel, help))
+	b.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, panel+"\n"+statusBar, help))
 	return b.String()
 }
