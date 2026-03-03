@@ -1,5 +1,18 @@
 # Changelog
 
+## v0.2.6
+
+### Features
+- Undo / redo (`u` / `Ctrl+r`) for all item mutations
+- Fold state persists across sessions; stale state is discarded automatically when the list changes
+
+### Improvements
+- Cursor returns to the pre-search item when cancelling search with `esc`
+- Stale fold state cleaned up on startup and when lists are deleted or renamed
+
+### Fixes
+- Unhandled file close errors in settings and theme loading
+
 ## v0.2.5
 
 ### Features
