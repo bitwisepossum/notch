@@ -183,7 +183,7 @@ func (m Model) updateItems(msg tea.Msg) (tea.Model, tea.Cmd) {
 				fi := m.flat[m.itemCursor]
 				m.prevMode = modeItems
 				m.mode = modeConfirm
-				m.confirmMsg = fmt.Sprintf("Delete %q? (y/n)", fi.item.Text)
+				m.confirmMsg = fmt.Sprintf("Delete %q?", fi.item.Text)
 				m.confirmKind = confirmDeleteItem
 				m.confirmItemPath = make([]int, len(fi.path))
 				copy(m.confirmItemPath, fi.path)

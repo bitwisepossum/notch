@@ -70,7 +70,7 @@ func (m Model) updateListPicker(msg tea.Msg) (tea.Model, tea.Cmd) {
 				name := m.lists[m.listCursor]
 				m.prevMode = modeListPicker
 				m.mode = modeConfirm
-				m.confirmMsg = fmt.Sprintf("Delete list %q? (y/n)", name)
+				m.confirmMsg = fmt.Sprintf("Delete list %q?", name)
 				m.confirmKind = confirmDeleteList
 				m.confirmTarget = name
 			}

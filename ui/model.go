@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/bitwisepossum/notch/todo"
+	"github.com/charmbracelet/x/ansi"
 
 	"charm.land/bubbles/v2/textinput"
 	tea "charm.land/bubbletea/v2"
@@ -253,7 +254,12 @@ func (m Model) View() tea.View {
 	case modeInput:
 		s = m.viewInput()
 	case modeConfirm:
-		s = m.viewConfirm()
+		// viewConfirm renders the background and overlays the popup itself.
+		// Return early — no frame wrapping needed.
+		v := tea.NewView(m.viewConfirm())
+		v.AltScreen = true
+		v.MouseMode = tea.MouseModeCellMotion
+		return v
 	case modeSearch:
 		s = m.viewSearch()
 	case modeSettings:
@@ -325,6 +331,33 @@ func renderScrollbar(lines []string, si scrollInfo, panelWidth int) []string {
 		out[i] = ch + line
 	}
 	return out
+}
+
+// overlayCenter places fg centered over bg, splicing ANSI-safe strings line by line.
+func overlayCenter(bg, fg string, termW, termH int) string {
+	bgLines := strings.Split(bg, "\n")
+	fgLines := strings.Split(fg, "\n")
+	fgH := len(fgLines)
+	fgW := 0
+	for _, l := range fgLines {
+		if w := lipgloss.Width(l); w > fgW {
+			fgW = w
+		}
+	}
+	startRow := (termH - fgH) / 2
+	startCol := max((termW-fgW)/2, 0)
+	for i, fgLine := range fgLines {
+		row := startRow + i
+		if row < 0 || row >= len(bgLines) {
+			continue
+		}
+		bg := bgLines[row]
+		bgW := lipgloss.Width(bg)
+		left := ansi.Cut(bg, 0, startCol)
+		right := ansi.Cut(bg, startCol+fgW, bgW)
+		bgLines[row] = left + fgLine + right
+	}
+	return strings.Join(bgLines, "\n")
 }
 
 // Messages

@@ -7,6 +7,7 @@ import (
 	"github.com/bitwisepossum/notch/todo"
 
 	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
 // updateInput handles messages while the text input overlay is active.
@@ -247,19 +248,24 @@ func (m Model) updateConfirm(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-// viewConfirm renders the underlying screen with the confirmation prompt below it.
+// viewConfirm renders a centered popup dialog overlaid on the underlying screen.
 func (m Model) viewConfirm() string {
-	var b strings.Builder
-
+	// Render background at terminal dimensions.
+	var underlying string
 	switch m.prevMode {
 	case modeListPicker:
-		b.WriteString(m.viewListPicker())
+		underlying = m.viewListPicker()
 	case modeItems:
-		b.WriteString(m.viewItems())
+		underlying = m.viewItems()
 	}
+	bg := lipgloss.Place(m.width, m.height, lipgloss.Left, lipgloss.Top,
+		styleFrame.Render(underlying))
 
-	b.WriteString("\n")
-	b.WriteString(styleConfirm.Render(m.confirmMsg) + " " +
-		styleHelpKey.Render("y") + styleHelpDesc.Render("/") + styleHelpKey.Render("n"))
-	return b.String()
+	// Build popup.
+	msg := styleConfirm.Render(m.confirmMsg)
+	hint := styleHelpKey.Render("y") + styleHelpDesc.Render("  /  ") + styleHelpKey.Render("n")
+	innerWidth := max(lipgloss.Width(msg), lipgloss.Width(hint))
+	popup := stylePanel.Width(innerWidth).Render(msg + "\n\n" + hint)
+
+	return overlayCenter(bg, popup, m.width, m.height)
 }
