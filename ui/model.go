@@ -72,6 +72,8 @@ type Model struct {
 	searchQuery    string           // active filter; empty means no filter
 	preSearchItem  *todo.Item       // item under cursor when search was opened
 	folded         map[string]bool  // paths of collapsed items
+	undoStack      []snapshot
+	redoStack      []snapshot
 
 	// Text input
 	textInput textinput.Model
@@ -141,6 +143,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.itemScroll = 0
 		m.searchQuery = ""
 		m.folded = make(map[string]bool)
+		m.undoStack = m.undoStack[:0]
+		m.redoStack = m.redoStack[:0]
 		m.loadFoldState()
 		m.rebuildFlat()
 		return m, nil
