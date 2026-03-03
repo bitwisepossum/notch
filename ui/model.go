@@ -131,6 +131,25 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case listsLoadedMsg:
 		m.lists = msg.lists
+		// Remove fold state for lists that no longer exist on disk.
+		if len(m.settings.FoldState) > 0 {
+			existing := make(map[string]bool, len(m.lists))
+			for _, name := range m.lists {
+				existing[name] = true
+			}
+			s := m.settings
+			changed := false
+			for name := range s.FoldState {
+				if !existing[name] {
+					delete(s.FoldState, name)
+					changed = true
+				}
+			}
+			if changed {
+				_ = todo.SaveSettings(s)
+				m.settings = s
+			}
+		}
 		return m, nil
 
 	case listOpenedMsg:

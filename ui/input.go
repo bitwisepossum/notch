@@ -144,6 +144,16 @@ func (m *Model) commitInput(val string) {
 				return
 			}
 			_ = todo.Delete(oldName)
+			// Move any persisted fold state from old name to new name.
+			s := m.settings
+			if s.FoldState != nil {
+				if entry, ok := s.FoldState[oldName]; ok {
+					delete(s.FoldState, oldName)
+					s.FoldState[val] = entry
+					_ = todo.SaveSettings(s)
+					m.settings = s
+				}
+			}
 			m.lists, _ = todo.ListAll()
 			for i, name := range m.lists {
 				if name == val {
@@ -204,6 +214,15 @@ func (m Model) updateConfirm(msg tea.Msg) (tea.Model, tea.Cmd) {
 			switch m.confirmKind {
 			case confirmDeleteList:
 				_ = todo.Delete(m.confirmTarget)
+				// Remove any persisted fold state for the deleted list.
+				s := m.settings
+				if s.FoldState != nil {
+					if _, ok := s.FoldState[m.confirmTarget]; ok {
+						delete(s.FoldState, m.confirmTarget)
+						_ = todo.SaveSettings(s)
+						m.settings = s
+					}
+				}
 				m.lists, _ = todo.ListAll()
 				if m.listCursor >= len(m.lists) && m.listCursor > 0 {
 					m.listCursor = len(m.lists) - 1
