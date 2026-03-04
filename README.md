@@ -9,6 +9,9 @@ A TUI todo app. Lists are stored as Markdown files with GFM checkboxes, so they 
 - Hierarchical todos with persistent fold state
 - Keyboard-driven interface
 - Fuzzy search / filter
+- Item deadlines with warning icons
+- Configurable deadline display/input format (still saved as `YYYY-MM-DD`)
+- Undo/redo for item edits
 - JSON-based themes
 - Lists stored as plain Markdown
 
@@ -45,26 +48,30 @@ notch
 |-----|--------|
 | `j` / `k` / `↑` / `↓` | Move cursor |
 | `PgDn` / `PgUp` / `Shift+↑/↓` | Jump half page |
+| `←` / `→` | Fold / unfold (contextual) |
 | `space` / `enter` | Toggle done |
 | `a` | Add item |
 | `A` | Add child item |
 | `e` | Edit item |
+| `t` | Set/clear deadline |
 | `d` | Delete item |
 | `J` / `K` / `Ctrl+↑/↓` | Reorder item |
 | `tab` / `Shift+tab` | Indent / outdent |
-| `f` | Fold / unfold item |
+| `f` | Toggle fold |
 | `Z` | Fold all / unfold all |
 | `/` | Search |
-| `esc` / `q` | Back to list picker |
+| `u` | Undo |
+| `Ctrl+r` | Redo |
+| `esc` / `q` | Back to list picker (or clear search) |
 
 ### Settings
 
 | Key | Action |
 |-----|--------|
 | `j` / `k` | Move between settings |
-| `e` | Set custom save path |
+| `enter` / `e` | Activate selected setting |
 | `c` | Clear save path (revert to default) |
-| `←` / `→` / `h` / `l` | Cycle theme |
+| `←` / `→` / `h` / `l` | Cycle theme / deadline format |
 | `R` | Reload themes from disk |
 | `esc` / `q` | Back |
 
@@ -83,10 +90,6 @@ Lists are saved as `.md` files in your platform's data directory:
 | Windows  | `%APPDATA%\notch\` |
 
 The save path can be changed from the Settings screen. The settings file itself (`settings.json`) always stays in the default location above.
-
-## Planned
-
-- Item deadlines
 
 ## Themes
 

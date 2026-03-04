@@ -19,7 +19,7 @@ The folder is created automatically on first launch. Select a theme in **Setting
 
 ## Creating Your Own
 
-Copy any `.json` file and edit the hex color values. All fields are required:
+Copy any `.json` file and edit the hex color values. Color fields are required (`#RGB` or `#RRGGBB`):
 
 ```json
 {
@@ -31,7 +31,12 @@ Copy any `.json` file and edit the hex color values. All fields are required:
   "danger":    "#hex",
   "separator": "#hex",
   "border":    "#hex",
-  "done":      "#hex"
+  "done":      "#hex",
+
+  "check_done": "✓",
+  "check_open": "○",
+  "bar_filled": "━",
+  "bar_empty":  "─"
 }
 ```
 
@@ -45,5 +50,11 @@ Copy any `.json` file and edit the hex color values. All fields are required:
 | `separator` | Depth dots, scrollbar track |
 | `border` | Panel border |
 | `done` | Strikethrough text on completed items |
+| `check_done` *(optional)* | Done checkbox character (default `✓`) |
+| `check_open` *(optional)* | Open checkbox character (default `○`) |
+| `bar_filled` *(optional)* | Progress bar filled character (default `━`) |
+| `bar_empty` *(optional)* | Progress bar empty character (default `─`) |
+
+Optional character fields must be a single display character (some emoji count as 2 cells, so keep it simple).
 
 The filename stem (e.g. `my-theme` from `my-theme.json`) is used as the internal key stored in `settings.json`. The `name` field is the display name shown in the UI.
