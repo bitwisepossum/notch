@@ -18,6 +18,10 @@ type Settings struct {
 	ActiveTheme   string                `json:"active_theme,omitempty"` // theme Key; empty = built-in default
 	FoldState     map[string]SavedFolds `json:"fold_state,omitempty"`   // list name → saved folds
 	CascadeDone   bool                  `json:"cascade_done,omitempty"` // marking done also marks all children
+	// DeadlineFormat controls how deadlines are displayed and parsed in the UI.
+	// Deadlines are still persisted to list files as YYYY-MM-DD for portability.
+	// Empty means default (YYYY-MM-DD).
+	DeadlineFormat string `json:"deadline_format,omitempty"`
 }
 
 const settingsFile = "settings.json"

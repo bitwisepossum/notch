@@ -175,9 +175,9 @@ func (m *Model) commitInput(val string) {
 		if val == "" {
 			_ = m.list.SetDeadline(fi.path, time.Time{})
 		} else {
-			d, err := time.Parse("2006-01-02", val)
+			d, err := time.Parse(deadlineLayout(m.settings), val)
 			if err != nil {
-				m.inputErr = "use YYYY-MM-DD"
+				m.inputErr = "use " + deadlineLabel(m.settings) + " (e.g. " + deadlineHint(m.settings) + ")"
 				return
 			}
 			_ = m.list.SetDeadline(fi.path, d)
@@ -230,7 +230,7 @@ func (m Model) viewInput() string {
 	case inputRenameList:
 		prompt = "Rename: "
 	case inputSetDeadline:
-		prompt = "Deadline (YYYY-MM-DD, empty=clear): "
+		prompt = "Deadline (" + deadlineLabel(m.settings) + ", empty=clear): "
 	}
 	errStr := ""
 	if m.inputErr != "" {

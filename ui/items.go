@@ -196,7 +196,7 @@ func (m Model) updateItems(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.inputAction = inputSetDeadline
 				fi := m.flat[m.itemCursor]
 				if !fi.item.Deadline.IsZero() {
-					m.textInput.SetValue(fi.item.Deadline.Format("2006-01-02"))
+					m.textInput.SetValue(fi.item.Deadline.Format(deadlineLayout(m.settings)))
 				} else {
 					m.textInput.SetValue("")
 				}
@@ -507,7 +507,7 @@ func (m Model) viewItems() string {
 
 			deadlineBadge := ""
 			if !fi.item.Deadline.IsZero() {
-				dateStr := fi.item.Deadline.Format("2006-01-02")
+				dateStr := fi.item.Deadline.Format(deadlineLayout(m.settings))
 				dl := fi.item.Deadline.In(time.Local).Truncate(24 * time.Hour)
 				var ds lipgloss.Style
 				icon := "📅"

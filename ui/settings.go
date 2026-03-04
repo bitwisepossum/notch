@@ -11,10 +11,11 @@ import (
 )
 
 const (
-	settingsRowPath    = 0
-	settingsRowTheme   = 1
-	settingsRowCascade = 2
-	settingsRowCount   = 3
+	settingsRowPath           = 0
+	settingsRowTheme          = 1
+	settingsRowDeadlineFormat = 2
+	settingsRowCascade        = 3
+	settingsRowCount          = 4
 )
 
 // updateSettings handles messages while the settings screen is active.
@@ -35,6 +36,8 @@ func (m Model) updateSettings(msg tea.Msg) (tea.Model, tea.Cmd) {
 						return m, m.textInput.Focus()
 					case settingsRowTheme:
 						m.cycleTheme(1)
+					case settingsRowDeadlineFormat:
+						m.cycleDeadlineFormat(1)
 					case settingsRowCascade:
 						m.settings.CascadeDone = !m.settings.CascadeDone
 						_ = todo.SaveSettings(m.settings)
@@ -66,6 +69,8 @@ func (m Model) updateSettings(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, m.textInput.Focus()
 			case settingsRowTheme:
 				m.cycleTheme(1)
+			case settingsRowDeadlineFormat:
+				m.cycleDeadlineFormat(1)
 			case settingsRowCascade:
 				m.settings.CascadeDone = !m.settings.CascadeDone
 				_ = todo.SaveSettings(m.settings)
@@ -84,10 +89,14 @@ func (m Model) updateSettings(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "h", "left":
 			if m.settingsCursor == settingsRowTheme {
 				m.cycleTheme(-1)
+			} else if m.settingsCursor == settingsRowDeadlineFormat {
+				m.cycleDeadlineFormat(-1)
 			}
 		case "l", "right":
 			if m.settingsCursor == settingsRowTheme {
 				m.cycleTheme(1)
+			} else if m.settingsCursor == settingsRowDeadlineFormat {
+				m.cycleDeadlineFormat(1)
 			}
 
 		case "R":
@@ -96,6 +105,13 @@ func (m Model) updateSettings(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	}
 	return m, nil
+}
+
+// cycleDeadlineFormat advances the deadline format preset by delta (-1 or +1) and saves it.
+func (m *Model) cycleDeadlineFormat(delta int) {
+	idx := (deadlineFormatIdx(m.settings) + delta + len(deadlineFormats)) % len(deadlineFormats)
+	m.settings.DeadlineFormat = deadlineFormats[idx].layout
+	_ = todo.SaveSettings(m.settings)
 }
 
 // cycleTheme advances the active theme by delta (-1 or +1), applies and saves it.
@@ -148,6 +164,15 @@ func (m Model) viewSettings() string {
 					file = styleHelpDesc.Render("  (" + t.Key + ".json)")
 				}
 				return fmt.Sprintf("%s%s  %s", t.Name, file, pos)
+			}(),
+		},
+		{
+			label: "Deadline format",
+			value: func() string {
+				idx := deadlineFormatIdx(m.settings)
+				total := len(deadlineFormats)
+				pos := styleHelpDesc.Render(fmt.Sprintf("[%d/%d]", idx+1, total))
+				return deadlineLabel(m.settings) + "  " + pos
 			}(),
 		},
 		{
