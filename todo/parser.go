@@ -9,8 +9,9 @@ import (
 
 var itemRe = regexp.MustCompile(`^(\s*)- \[([ xX])\] (.+)$`)
 
-// deadlineRe matches the Obsidian Tasks deadline suffix: 📅 YYYY-MM-DD
-var deadlineRe = regexp.MustCompile(`\s*📅\s*(\d{4}-\d{2}-\d{2})\s*$`)
+// deadlineRe matches the deadline suffix: @YYYY-MM-DD
+// The legacy Obsidian Tasks format (📅 YYYY-MM-DD) is also accepted on read.
+var deadlineRe = regexp.MustCompile(`\s*(?:@|📅\s*)(\d{4}-\d{2}-\d{2})\s*$`)
 
 // Parse reads Markdown from r and returns a slice of top-level Items.
 // It recognizes GFM checkbox lines with 2-space indentation for nesting.

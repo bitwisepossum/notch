@@ -182,7 +182,7 @@ func TestParse_MalformedIndent(t *testing.T) {
 }
 
 func TestRoundTrip_Deadline(t *testing.T) {
-	input := "- [ ] Buy groceries 📅 2025-12-31\n- [x] Done task 📅 2024-01-15\n"
+	input := "- [ ] Buy groceries @2025-12-31\n- [x] Done task @2024-01-15\n"
 	items, err := Parse(strings.NewReader(input))
 	if err != nil {
 		t.Fatal(err)

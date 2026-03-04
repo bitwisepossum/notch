@@ -9,8 +9,8 @@ A TUI todo app. Lists are stored as Markdown files with GFM checkboxes, so they 
 - Hierarchical todos with persistent fold state
 - Keyboard-driven interface
 - Fuzzy search / filter
-- Item deadlines with warning icons
-- Configurable deadline display/input format (still saved as `YYYY-MM-DD`)
+- Item deadlines with urgency indicators
+- Configurable deadline display/input format (always saved as `@YYYY-MM-DD`)
 - Undo/redo for item edits
 - JSON-based themes
 - Lists stored as plain Markdown
@@ -90,6 +90,15 @@ Lists are saved as `.md` files in your platform's data directory:
 | Windows  | `%APPDATA%\notch\` |
 
 The save path can be changed from the Settings screen. The settings file itself (`settings.json`) always stays in the default location above.
+
+Deadlines are stored inline using `@YYYY-MM-DD` at the end of the item line:
+
+```md
+- [ ] Submit report @2026-03-10
+- [x] Buy groceries @2026-03-04
+```
+
+The display format is configurable (e.g. `DD/MM/YYYY`) but the stored format is always `@YYYY-MM-DD`, so files remain portable and editable in any text editor.
 
 ## Themes
 

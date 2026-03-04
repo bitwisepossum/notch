@@ -510,20 +510,20 @@ func (m Model) viewItems() string {
 				dateStr := fi.item.Deadline.Format(deadlineLayout(m.settings))
 				dl := fi.item.Deadline.In(time.Local).Truncate(24 * time.Hour)
 				var ds lipgloss.Style
-				icon := "📅"
+				icon := "#"
 				switch {
 				case fi.item.Done:
 					ds = styleCheckDone
 				case dl.Before(today):
 					ds = styleConfirm
-					icon = "⚠"
+					icon = "!"
 				case dl.Equal(today):
 					ds = stylePrompt
-					icon = "⏰"
+					icon = "*"
 				case dl.After(today) && !dl.After(soonCutoff):
 					// Due soon: gentle warning.
 					ds = styleHelpKey
-					icon = "⌛"
+					icon = "~"
 				default:
 					ds = styleHelpDesc
 				}
