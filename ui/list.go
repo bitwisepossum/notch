@@ -94,7 +94,7 @@ func (m Model) viewListPicker() string {
 			name := m.lists[i]
 			var line string
 			if i == m.listCursor {
-				line = styleCursor.Render("› ") + styleSelected.Render(name)
+				line = styleSelected.Render("  " + name)
 			} else {
 				line = "  " + name
 			}
