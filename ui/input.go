@@ -192,15 +192,27 @@ func (m Model) viewInput() string {
 	var b strings.Builder
 
 	// Render the underlying screen.
+	var underlying string
 	switch m.prevMode {
 	case modeListPicker:
-		b.WriteString(m.viewListPicker())
+		underlying = m.viewListPicker()
 	case modeItems:
-		b.WriteString(m.viewItems())
+		underlying = m.viewItems()
 	case modeSettings:
-		b.WriteString(m.viewSettings())
+		underlying = m.viewSettings()
 	}
 
+	// The underlying views generally try to fill the entire terminal height.
+	// When we add an input row + help row, the bottom of the screen can get
+	// clipped, making the input appear "missing". Trim the underlying render to
+	// leave room for the input UI.
+	reserved := 3 // blank line + input line + help line
+	maxUnderlying := max(m.height-reserved, 1)
+	lines := strings.Split(underlying, "\n")
+	if len(lines) > maxUnderlying {
+		lines = lines[:maxUnderlying]
+	}
+	b.WriteString(strings.Join(lines, "\n"))
 	b.WriteString("\n")
 
 	var prompt string

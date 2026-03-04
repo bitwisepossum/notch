@@ -456,6 +456,8 @@ func (m Model) viewItems() string {
 	var items strings.Builder
 
 	total, done := subtreeCount(&todo.Item{Children: m.list.Items})
+	// Cache "today" once per render so we don't call time.Now() for each row.
+	today := time.Now().In(time.Local).Truncate(24 * time.Hour)
 
 	if len(m.flat) == 0 {
 		items.WriteString(styleEmpty.Render("Empty list. Press a to add an item."))
@@ -505,8 +507,7 @@ func (m Model) viewItems() string {
 			deadlineBadge := ""
 			if !fi.item.Deadline.IsZero() {
 				dateStr := fi.item.Deadline.Format("2006-01-02")
-				today := time.Now().Truncate(24 * time.Hour)
-				dl := fi.item.Deadline.UTC().Truncate(24 * time.Hour)
+				dl := fi.item.Deadline.In(time.Local).Truncate(24 * time.Hour)
 				var ds lipgloss.Style
 				switch {
 				case fi.item.Done:

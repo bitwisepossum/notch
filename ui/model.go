@@ -95,6 +95,10 @@ func New() Model {
 	s.Focused.Prompt = lipgloss.NewStyle().Foreground(colorAccent)
 	s.Focused.Text = lipgloss.NewStyle().Foreground(colorPrimary)
 	s.Cursor.Color = colorAccent
+	// Blinking cursors cause periodic redraws. When the underlying view is
+	// relatively heavy (e.g. long item lists with rich rendering), those redraws
+	// can make the UI feel "hung" as soon as any input is focused.
+	s.Cursor.Blink = false
 	ti.SetStyles(s)
 
 	return Model{
