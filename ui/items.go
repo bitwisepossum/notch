@@ -458,6 +458,7 @@ func (m Model) viewItems() string {
 	total, done := subtreeCount(&todo.Item{Children: m.list.Items})
 	// Cache "today" once per render so we don't call time.Now() for each row.
 	today := time.Now().In(time.Local).Truncate(24 * time.Hour)
+	soonCutoff := today.Add(3 * 24 * time.Hour)
 
 	if len(m.flat) == 0 {
 		items.WriteString(styleEmpty.Render("Empty list. Press a to add an item."))
@@ -509,17 +510,24 @@ func (m Model) viewItems() string {
 				dateStr := fi.item.Deadline.Format("2006-01-02")
 				dl := fi.item.Deadline.In(time.Local).Truncate(24 * time.Hour)
 				var ds lipgloss.Style
+				icon := "📅"
 				switch {
 				case fi.item.Done:
 					ds = styleCheckDone
 				case dl.Before(today):
 					ds = styleConfirm
+					icon = "⚠"
 				case dl.Equal(today):
 					ds = stylePrompt
+					icon = "⏰"
+				case dl.After(today) && !dl.After(soonCutoff):
+					// Due soon: gentle warning.
+					ds = styleHelpKey
+					icon = "⌛"
 				default:
 					ds = styleHelpDesc
 				}
-				deadlineBadge = "  " + ds.Render("📅 "+dateStr)
+				deadlineBadge = "  " + ds.Render(icon+" "+dateStr)
 			}
 
 			isFolded := m.folded[pathKey(fi.path)]
