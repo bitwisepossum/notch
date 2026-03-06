@@ -52,7 +52,8 @@ The version string lives in `ui/version.go` — one constant, one file.
 
 **Version push workflow:**
 1. Update `Version` in `ui/version.go` (e.g. `"0.2.0"`)
-2. Commit: `Bump version to v0.2.0`
-3. Tag: `git tag v0.2.0`
+2. Update `CHANGELOG.md`: promote the `## Unreleased` section to `## v0.2.0 — YYYY-MM-DD` and add a fresh empty `## Unreleased` block at the top
+3. Commit: `Bump version to v0.2.0`
+4. Tag: `git tag v0.2.0`
 
-Regular commits do not touch the version.
+Regular commits do not touch the version or changelog.

@@ -67,7 +67,7 @@ var (
 	}
 	settingsHelp = []helpGroup{
 		{pairs: []helpPair{
-			{"j/k", "move"},
+			{"j/k ↑/↓", "move"},
 		}},
 		{pairs: []helpPair{
 			{"enter/e", "activate"},

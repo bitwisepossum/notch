@@ -68,7 +68,7 @@ notch
 
 | Key | Action |
 |-----|--------|
-| `j` / `k` | Move between settings |
+| `j` / `k` / `↑` / `↓` | Move between settings |
 | `enter` / `e` | Activate selected setting |
 | `c` | Clear save path (revert to default) |
 | `←` / `→` / `h` / `l` | Cycle theme / deadline format |
