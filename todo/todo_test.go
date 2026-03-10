@@ -337,3 +337,119 @@ func TestHash_ChangesOnDeadline(t *testing.T) {
 		t.Error("hash did not change after setting deadline")
 	}
 }
+
+func TestToggleCascade(t *testing.T) {
+	l := newTestList()
+	// First is undone, Child A undone, Child B done.
+	// Cascade toggle First → all become done.
+	if err := l.ToggleCascade([]int{0}); err != nil {
+		t.Fatal(err)
+	}
+	if !l.Items[0].Done {
+		t.Error("expected parent Done=true")
+	}
+	if !l.Items[0].Children[0].Done {
+		t.Error("expected Child A Done=true")
+	}
+	if !l.Items[0].Children[1].Done {
+		t.Error("expected Child B Done=true")
+	}
+	// Toggle again → all become undone.
+	if err := l.ToggleCascade([]int{0}); err != nil {
+		t.Fatal(err)
+	}
+	if l.Items[0].Done {
+		t.Error("expected parent Done=false")
+	}
+	if l.Items[0].Children[0].Done {
+		t.Error("expected Child A Done=false")
+	}
+	if l.Items[0].Children[1].Done {
+		t.Error("expected Child B Done=false")
+	}
+}
+
+func TestToggleCascade_InvalidPath(t *testing.T) {
+	l := newTestList()
+	if err := l.ToggleCascade([]int{9}); err == nil {
+		t.Fatal("expected error for invalid path")
+	}
+}
+
+func TestToggle_InvalidPath(t *testing.T) {
+	l := newTestList()
+	if err := l.Toggle([]int{9}); err == nil {
+		t.Fatal("expected error for invalid path")
+	}
+}
+
+func TestRename(t *testing.T) {
+	l := newTestList()
+	l.Rename("updated")
+	if l.Name != "updated" {
+		t.Errorf("expected 'updated', got %q", l.Name)
+	}
+}
+
+func TestChildCount(t *testing.T) {
+	l := newTestList()
+	// Top-level: 2 items (First, Second)
+	if n := l.ChildCount(nil); n != 2 {
+		t.Errorf("expected 2 top-level, got %d", n)
+	}
+	// Children of First: 2 (Child A, Child B)
+	if n := l.ChildCount([]int{0}); n != 2 {
+		t.Errorf("expected 2 children, got %d", n)
+	}
+	// Children of Second: 0
+	if n := l.ChildCount([]int{1}); n != 0 {
+		t.Errorf("expected 0 children, got %d", n)
+	}
+}
+
+func TestChildCount_InvalidPath(t *testing.T) {
+	l := newTestList()
+	if n := l.ChildCount([]int{9}); n != 0 {
+		t.Errorf("expected 0 for invalid path, got %d", n)
+	}
+}
+
+func TestAdd_InvalidParent(t *testing.T) {
+	l := newTestList()
+	before := len(l.Items)
+	l.Add([]int{9}, "orphan")
+	if len(l.Items) != before {
+		t.Error("expected no change for invalid parent path")
+	}
+}
+
+func TestRemove_NegativeIndex(t *testing.T) {
+	l := newTestList()
+	// Negative index in intermediate path segment.
+	if err := l.Remove([]int{-1, 0}); err == nil {
+		t.Fatal("expected error for negative index")
+	}
+}
+
+func TestMove_InvalidDestParent(t *testing.T) {
+	l := newTestList()
+	// Move to a destination whose parent doesn't exist.
+	if err := l.Move([]int{1}, []int{9, 0}); err == nil {
+		t.Fatal("expected error for invalid destination parent")
+	}
+}
+
+func TestMove_ClampDestIndex(t *testing.T) {
+	l := newTestList()
+	// Move Second to index 99 (way out of range) — should clamp to end.
+	if err := l.Move([]int{1}, []int{99}); err != nil {
+		t.Fatal(err)
+	}
+	// After removing Second from index 1, there's 1 item. Clamped to index 1 (append).
+	if len(l.Items) != 2 {
+		t.Fatalf("expected 2 items, got %d", len(l.Items))
+	}
+	if l.Items[1].Text != "Second" {
+		t.Errorf("expected 'Second' at end, got %q", l.Items[1].Text)
+	}
+}

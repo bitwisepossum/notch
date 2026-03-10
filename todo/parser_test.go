@@ -221,3 +221,66 @@ func TestParse_NoDeadline(t *testing.T) {
 		t.Errorf("expected zero deadline, got %v", items[0].Deadline)
 	}
 }
+
+func TestParse_LegacyObsidianDeadline(t *testing.T) {
+	input := "- [ ] Task with legacy deadline 📅 2025-06-15\n"
+	items, err := Parse(strings.NewReader(input))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(items) != 1 {
+		t.Fatalf("expected 1 item, got %d", len(items))
+	}
+	if items[0].Text != "Task with legacy deadline" {
+		t.Errorf("expected text %q, got %q", "Task with legacy deadline", items[0].Text)
+	}
+	want := time.Date(2025, 6, 15, 0, 0, 0, 0, time.UTC)
+	if !items[0].Deadline.Equal(want) {
+		t.Errorf("expected deadline %v, got %v", want, items[0].Deadline)
+	}
+
+	// Round-trip should convert to @ format.
+	var buf bytes.Buffer
+	if err := Write(&buf, items); err != nil {
+		t.Fatal(err)
+	}
+	expected := "- [ ] Task with legacy deadline @2025-06-15\n"
+	if buf.String() != expected {
+		t.Errorf("expected %q, got %q", expected, buf.String())
+	}
+}
+
+func TestParse_UppercaseX(t *testing.T) {
+	input := "- [X] Done with uppercase\n"
+	items, err := Parse(strings.NewReader(input))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(items) != 1 {
+		t.Fatalf("expected 1 item, got %d", len(items))
+	}
+	if !items[0].Done {
+		t.Error("expected Done=true for [X]")
+	}
+	if items[0].Text != "Done with uppercase" {
+		t.Errorf("expected text %q, got %q", "Done with uppercase", items[0].Text)
+	}
+}
+
+func TestParse_NestedDeadlines(t *testing.T) {
+	input := `- [ ] Parent @2025-01-01
+  - [ ] Child @2025-06-15
+`
+	items, err := Parse(strings.NewReader(input))
+	if err != nil {
+		t.Fatal(err)
+	}
+	wantParent := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
+	if !items[0].Deadline.Equal(wantParent) {
+		t.Errorf("parent deadline: got %v, want %v", items[0].Deadline, wantParent)
+	}
+	wantChild := time.Date(2025, 6, 15, 0, 0, 0, 0, time.UTC)
+	if !items[0].Children[0].Deadline.Equal(wantChild) {
+		t.Errorf("child deadline: got %v, want %v", items[0].Children[0].Deadline, wantChild)
+	}
+}
