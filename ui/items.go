@@ -34,6 +34,9 @@ func (m *Model) rebuildFlat() {
 	m.flat = m.flat[:0]
 	if m.searchQuery != "" {
 		for _, r := range m.list.Search(m.searchQuery) {
+			if m.hideDone && r.Item.Done {
+				continue
+			}
 			m.flat = append(m.flat, flatItem{item: r.Item, path: r.Path, depth: len(r.Path) - 1})
 		}
 		return
@@ -44,6 +47,9 @@ func (m *Model) rebuildFlat() {
 // flattenItems recursively appends items to m.flat with their path and depth.
 func (m *Model) flattenItems(items []*todo.Item, parentPath []int, depth int) {
 	for i, item := range items {
+		if m.hideDone && item.Done {
+			continue
+		}
 		path := make([]int, len(parentPath)+1)
 		copy(path, parentPath)
 		path[len(parentPath)] = i
@@ -216,6 +222,10 @@ func (m Model) updateItems(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.unfoldItem()
 		case "f":
 			m.toggleFold()
+		case "H":
+			m.hideDone = !m.hideDone
+			m.rebuildFlat()
+			m.itemCursor = min(m.itemCursor, max(len(m.flat)-1, 0))
 		case "Z":
 			m.toggleFoldAll()
 		}
@@ -504,7 +514,11 @@ func (m Model) viewItems() string {
 	soonCutoff := today.Add(3 * 24 * time.Hour)
 
 	if len(m.flat) == 0 {
-		items.WriteString(styleEmpty.Render("Empty list. Press a to add an item."))
+		if m.hideDone && done > 0 {
+			items.WriteString(styleEmpty.Render(fmt.Sprintf("All %d items done. Press H to show.", done)))
+		} else {
+			items.WriteString(styleEmpty.Render("Empty list. Press a to add an item."))
+		}
 	} else {
 		visible := m.visibleRows()
 		end := min(m.itemScroll+visible, len(m.flat))
@@ -546,6 +560,17 @@ func (m Model) viewItems() string {
 			if m.folded[pathKey(fi.path)] {
 				t, d := subtreeCount(fi.item)
 				suffix = " " + styleCount.Render(fmt.Sprintf("(%d/%d)", d, t))
+			}
+			if m.hideDone && len(fi.item.Children) > 0 {
+				hidden := 0
+				for _, c := range fi.item.Children {
+					if c.Done {
+						hidden++
+					}
+				}
+				if hidden > 0 {
+					suffix += " " + styleCheckDone.Render(fmt.Sprintf("(+%d done)", hidden))
+				}
 			}
 
 			deadlineBadge := ""
@@ -608,7 +633,11 @@ func (m Model) viewItems() string {
 
 	panel := stylePanel.Width(m.panelWidth()).Render(items.String())
 	remaining := total - done
-	statusBar := styleHelpDesc.Render(fmt.Sprintf("  %d done · %d remaining", done, remaining))
+	status := fmt.Sprintf("  %d done · %d remaining", done, remaining)
+	if m.hideDone && done > 0 {
+		status += fmt.Sprintf(" · %d hidden", done)
+	}
+	statusBar := styleHelpDesc.Render(status)
 	help := lipgloss.NewStyle().PaddingTop(1).PaddingLeft(2).Render(renderHelp(itemsHelp))
 
 	var b strings.Builder

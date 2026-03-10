@@ -73,6 +73,7 @@ type Model struct {
 	searchQuery    string           // active filter; empty means no filter
 	preSearchItem  *todo.Item       // item under cursor when search was opened
 	folded         map[string]bool  // paths of collapsed items
+	hideDone       bool             // when true, completed items are filtered out
 	undoStack      []snapshot
 	redoStack      []snapshot
 
@@ -180,6 +181,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.itemCursor = 0
 		m.itemScroll = 0
 		m.searchQuery = ""
+		m.hideDone = false
 		m.folded = make(map[string]bool)
 		m.undoStack = m.undoStack[:0]
 		m.redoStack = m.redoStack[:0]

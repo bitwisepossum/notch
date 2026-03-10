@@ -87,6 +87,7 @@ var (
 			{"←/→", "fold"},
 			{"f", "toggle fold"},
 			{"Z", "fold all"},
+			{"H", "hide done"},
 		}},
 		{header: "edit", pairs: []helpPair{
 			{"space/enter", "toggle"},
