@@ -60,6 +60,15 @@ func (m *Model) flattenItems(items []*todo.Item, parentPath []int, depth int) {
 	}
 }
 
+// closeList saves state and returns to the list picker.
+func (m *Model) closeList() {
+	m.save()
+	m.saveFoldState()
+	m.list = nil
+	m.flat = nil
+	m.mode = modeListPicker
+}
+
 // updateItems handles messages while the item browser is active.
 func (m Model) updateItems(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
@@ -106,11 +115,7 @@ func (m Model) updateItems(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "q":
-			m.save()
-			m.saveFoldState()
-			m.list = nil
-			m.flat = nil
-			m.mode = modeListPicker
+			m.closeList()
 			return m, m.loadLists
 		case "/":
 			if len(m.flat) > 0 {
@@ -132,11 +137,7 @@ func (m Model) updateItems(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.itemScroll = clampScroll(m.itemCursor, m.itemScroll, m.visibleRows(), len(m.flat))
 				return m, nil
 			}
-			m.save()
-			m.saveFoldState()
-			m.list = nil
-			m.flat = nil
-			m.mode = modeListPicker
+			m.closeList()
 			return m, m.loadLists
 		case "j", "down":
 			if m.itemCursor < len(m.flat)-1 {
@@ -473,7 +474,6 @@ func (m *Model) toggleFoldAll() {
 	m.itemCursor = min(m.itemCursor, max(len(m.flat)-1, 0))
 }
 
-// resolveItem navigates the item tree by path indices and returns the target item.
 // breadcrumb returns the › -joined names of ancestors along path (excluding the item itself).
 func breadcrumb(items []*todo.Item, path []int) string {
 	if len(path) < 2 {
@@ -491,6 +491,7 @@ func breadcrumb(items []*todo.Item, path []int) string {
 	return strings.Join(parts, " › ")
 }
 
+// resolveItem navigates the item tree by path indices and returns the target item.
 func resolveItem(items []*todo.Item, path []int) *todo.Item {
 	var current *todo.Item
 	slice := items
@@ -525,6 +526,8 @@ func (m Model) viewItems() string {
 		var lines []string
 		for i := m.itemScroll; i < end; i++ {
 			fi := m.flat[i]
+			key := pathKey(fi.path)
+			isFolded := m.folded[key]
 			selected := i == m.itemCursor
 
 			cursor := "  "
@@ -541,10 +544,10 @@ func (m Model) viewItems() string {
 			if len(fi.item.Children) > 0 {
 				if m.searchQuery != "" {
 					// During search folds are bypassed; show ▸ dimly if folded, nothing if expanded.
-					if m.folded[pathKey(fi.path)] {
+					if isFolded {
 						fold = styleDepthDot.Render("▸") + " "
 					}
-				} else if m.folded[pathKey(fi.path)] {
+				} else if isFolded {
 					fold = styleCursor.Render("▸") + " "
 				} else {
 					fold = styleDepthDot.Render("▾") + " "
@@ -557,7 +560,7 @@ func (m Model) viewItems() string {
 			}
 
 			suffix := ""
-			if m.folded[pathKey(fi.path)] {
+			if isFolded {
 				t, d := subtreeCount(fi.item)
 				suffix = " " + styleCount.Render(fmt.Sprintf("(%d/%d)", d, t))
 			}
@@ -598,7 +601,6 @@ func (m Model) viewItems() string {
 				deadlineBadge = "  " + ds.Render(icon+" "+dateStr)
 			}
 
-			isFolded := m.folded[pathKey(fi.path)]
 			text := fi.item.Text
 			if m.searchQuery != "" && !fi.item.Done {
 				text = highlightMatch(text, m.searchQuery)

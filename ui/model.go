@@ -133,7 +133,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			m.listScroll = clampScroll(m.listCursor, m.listScroll, m.visibleRows(), len(m.lists))
 		case modeSettings:
-			m.settingsCursor = min(m.settingsCursor, 3)
+			m.settingsCursor = min(m.settingsCursor, settingsRowCount-1)
 		}
 		return m, nil
 
@@ -458,10 +458,8 @@ func (m Model) saveFoldState() {
 		return
 	}
 	var paths []string
-	for k, v := range m.folded {
-		if v {
-			paths = append(paths, k)
-		}
+	for k := range m.folded {
+		paths = append(paths, k)
 	}
 	s := m.settings
 	if len(paths) == 0 {

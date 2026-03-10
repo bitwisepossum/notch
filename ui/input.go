@@ -276,8 +276,9 @@ func (m Model) updateConfirm(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 			case confirmDeleteItem:
 				m.pushUndo()
-				clear(m.folded)
+				saved := m.snapshotFoldedItems()
 				_ = m.list.Remove(m.confirmItemPath)
+				m.rebuildFoldedFromPointers(saved)
 				m.save()
 				m.rebuildFlat()
 				if m.itemCursor >= len(m.flat) && m.itemCursor > 0 {

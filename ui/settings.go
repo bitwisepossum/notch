@@ -18,6 +18,27 @@ const (
 	settingsRowCount          = 4
 )
 
+// activateSetting performs the action for the currently selected settings row.
+// Returns a tea.Cmd if the action requires one (e.g. focusing a text input).
+func (m *Model) activateSetting() tea.Cmd {
+	switch m.settingsCursor {
+	case settingsRowPath:
+		m.prevMode = modeSettings
+		m.mode = modeInput
+		m.inputAction = inputSetDataDir
+		m.textInput.SetValue(m.settings.CustomDataDir)
+		return m.textInput.Focus()
+	case settingsRowTheme:
+		m.cycleTheme(1)
+	case settingsRowDeadlineFormat:
+		m.cycleDeadlineFormat(1)
+	case settingsRowCascade:
+		m.settings.CascadeDone = !m.settings.CascadeDone
+		_ = todo.SaveSettings(m.settings)
+	}
+	return nil
+}
+
 // updateSettings handles messages while the settings screen is active.
 func (m Model) updateSettings(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
@@ -26,21 +47,8 @@ func (m Model) updateSettings(msg tea.Msg) (tea.Model, tea.Cmd) {
 			row := msg.Y - headerLines
 			if row >= 0 && row < settingsRowCount {
 				if row == m.settingsCursor {
-					// Second click on selected row — activate it.
-					switch m.settingsCursor {
-					case settingsRowPath:
-						m.prevMode = modeSettings
-						m.mode = modeInput
-						m.inputAction = inputSetDataDir
-						m.textInput.SetValue(m.settings.CustomDataDir)
-						return m, m.textInput.Focus()
-					case settingsRowTheme:
-						m.cycleTheme(1)
-					case settingsRowDeadlineFormat:
-						m.cycleDeadlineFormat(1)
-					case settingsRowCascade:
-						m.settings.CascadeDone = !m.settings.CascadeDone
-						_ = todo.SaveSettings(m.settings)
+					if cmd := m.activateSetting(); cmd != nil {
+						return m, cmd
 					}
 				} else {
 					m.settingsCursor = row
@@ -60,20 +68,8 @@ func (m Model) updateSettings(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.settingsCursor = (m.settingsCursor - 1 + settingsRowCount) % settingsRowCount
 
 		case "enter", "e":
-			switch m.settingsCursor {
-			case settingsRowPath:
-				m.prevMode = modeSettings
-				m.mode = modeInput
-				m.inputAction = inputSetDataDir
-				m.textInput.SetValue(m.settings.CustomDataDir)
-				return m, m.textInput.Focus()
-			case settingsRowTheme:
-				m.cycleTheme(1)
-			case settingsRowDeadlineFormat:
-				m.cycleDeadlineFormat(1)
-			case settingsRowCascade:
-				m.settings.CascadeDone = !m.settings.CascadeDone
-				_ = todo.SaveSettings(m.settings)
+			if cmd := m.activateSetting(); cmd != nil {
+				return m, cmd
 			}
 
 		case "c":
