@@ -33,6 +33,7 @@ const (
 	inputSetDataDir
 	inputRenameList
 	inputSetDeadline
+	inputQuickAdd
 )
 
 // confirmAction tracks what the confirm dialog is for.

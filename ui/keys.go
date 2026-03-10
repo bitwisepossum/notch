@@ -59,6 +59,7 @@ var (
 		}},
 		{pairs: []helpPair{
 			{"n", "new"},
+			{"a", "quick add"},
 			{"r", "rename"},
 			{"d", "delete"},
 			{"s", "settings"},

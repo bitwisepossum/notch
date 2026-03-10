@@ -166,6 +166,15 @@ func (m *Model) commitInput(val string) {
 			}
 		}
 
+	case inputQuickAdd:
+		name := m.lists[m.listCursor]
+		list, err := todo.Load(name)
+		if err != nil {
+			return
+		}
+		list.Add(nil, val)
+		_ = todo.Save(list)
+
 	case inputSetDeadline:
 		if len(m.flat) == 0 {
 			return
@@ -231,6 +240,8 @@ func (m Model) viewInput() string {
 		prompt = "Rename: "
 	case inputSetDeadline:
 		prompt = "Deadline (" + deadlineLabel(m.settings) + ", empty=clear): "
+	case inputQuickAdd:
+		prompt = "Add to " + m.lists[m.listCursor] + ": "
 	}
 	errStr := ""
 	if m.inputErr != "" {
