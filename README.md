@@ -11,7 +11,9 @@ A TUI todo app. Lists are stored as Markdown files with GFM checkboxes, so they 
 - Fuzzy search / filter
 - Item deadlines with urgency indicators
 - Configurable deadline display/input format (always saved as `@YYYY-MM-DD`)
+- Hide completed items (status bar shows hidden count; parents show `+N done` suffix)
 - Undo/redo for item edits
+- Quick-add items to a list without opening it
 - JSON-based themes
 - Lists stored as plain Markdown
 
@@ -37,6 +39,7 @@ notch
 | `PgDn` / `PgUp` / `Shift+↑/↓` | Jump half page |
 | `enter` | Open list |
 | `n` | New list |
+| `a` | Quick-add item to selected list |
 | `r` | Rename list |
 | `d` | Delete list |
 | `s` | Settings |
@@ -59,6 +62,7 @@ notch
 | `tab` / `Shift+tab` | Indent / outdent |
 | `f` | Toggle fold |
 | `Z` | Fold all / unfold all |
+| `H` | Hide / show completed items |
 | `/` | Search |
 | `u` | Undo |
 | `Ctrl+r` | Redo |
