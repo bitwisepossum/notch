@@ -243,12 +243,52 @@ func (m *Model) followItem(target *todo.Item) {
 	}
 }
 
+// snapshotFoldedItems returns the set of item pointers that are currently folded.
+// It walks the full item tree (not m.flat) so folded items inside collapsed
+// subtrees are also captured.
+func (m *Model) snapshotFoldedItems() map[*todo.Item]bool {
+	result := make(map[*todo.Item]bool)
+	var walk func(items []*todo.Item, prefix []int)
+	walk = func(items []*todo.Item, prefix []int) {
+		for i, item := range items {
+			path := make([]int, len(prefix)+1)
+			copy(path, prefix)
+			path[len(prefix)] = i
+			if m.folded[pathKey(path)] {
+				result[item] = true
+			}
+			walk(item.Children, path)
+		}
+	}
+	walk(m.list.Items, nil)
+	return result
+}
+
+// rebuildFoldedFromPointers replaces m.folded with path keys derived from item
+// pointer identity, preserving fold state across structural changes (move/indent/outdent).
+func (m *Model) rebuildFoldedFromPointers(foldedItems map[*todo.Item]bool) {
+	m.folded = make(map[string]bool)
+	var walk func(items []*todo.Item, prefix []int)
+	walk = func(items []*todo.Item, prefix []int) {
+		for i, item := range items {
+			path := make([]int, len(prefix)+1)
+			copy(path, prefix)
+			path[len(prefix)] = i
+			if foldedItems[item] {
+				m.folded[pathKey(path)] = true
+			}
+			walk(item.Children, path)
+		}
+	}
+	walk(m.list.Items, nil)
+}
+
 // moveItem swaps the current item with its sibling in the given direction (+1 down, -1 up).
 func (m *Model) moveItem(dir int) {
 	if len(m.flat) == 0 {
 		return
 	}
-	clear(m.folded)
+	saved := m.snapshotFoldedItems()
 	fi := m.flat[m.itemCursor]
 	path := fi.path
 	idx := path[len(path)-1]
@@ -268,6 +308,7 @@ func (m *Model) moveItem(dir int) {
 	if err := m.list.Move(path, to); err != nil {
 		return
 	}
+	m.rebuildFoldedFromPointers(saved)
 	m.save()
 	m.rebuildFlat()
 	m.followItem(fi.item)
@@ -278,7 +319,7 @@ func (m *Model) indentItem() {
 	if len(m.flat) == 0 {
 		return
 	}
-	clear(m.folded)
+	saved := m.snapshotFoldedItems()
 	fi := m.flat[m.itemCursor]
 	path := fi.path
 	idx := path[len(path)-1]
@@ -305,6 +346,7 @@ func (m *Model) indentItem() {
 	if err := m.list.Move(path, to); err != nil {
 		return
 	}
+	m.rebuildFoldedFromPointers(saved)
 	m.save()
 	m.rebuildFlat()
 	m.followItem(fi.item)
@@ -315,7 +357,7 @@ func (m *Model) outdentItem() {
 	if len(m.flat) == 0 {
 		return
 	}
-	clear(m.folded)
+	saved := m.snapshotFoldedItems()
 	fi := m.flat[m.itemCursor]
 	path := fi.path
 	if len(path) < 2 {
@@ -333,6 +375,7 @@ func (m *Model) outdentItem() {
 	if err := m.list.Move(path, to); err != nil {
 		return
 	}
+	m.rebuildFoldedFromPointers(saved)
 	m.save()
 	m.rebuildFlat()
 	m.followItem(fi.item)
