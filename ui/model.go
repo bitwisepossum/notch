@@ -119,6 +119,20 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
+		switch m.mode {
+		case modeItems:
+			if len(m.flat) > 0 {
+				m.itemCursor = min(m.itemCursor, len(m.flat)-1)
+			}
+			m.itemScroll = clampScroll(m.itemCursor, m.itemScroll, m.visibleRows(), len(m.flat))
+		case modeListPicker:
+			if len(m.lists) > 0 {
+				m.listCursor = min(m.listCursor, len(m.lists)-1)
+			}
+			m.listScroll = clampScroll(m.listCursor, m.listScroll, m.visibleRows(), len(m.lists))
+		case modeSettings:
+			m.settingsCursor = min(m.settingsCursor, 3)
+		}
 		return m, nil
 
 	case settingsLoadedMsg:
