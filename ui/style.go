@@ -42,10 +42,10 @@ var (
 	styleScrollTrack = lipgloss.NewStyle().Foreground(colorSeparator)
 	styleScrollArrow = lipgloss.NewStyle().Foreground(colorMuted)
 	stylePanel       = lipgloss.NewStyle().
-				Border(lipgloss.RoundedBorder()).
+				Border(lipgloss.NormalBorder()).
 				BorderForeground(colorBorder).
 				Padding(0, 1)
-	styleFrame = lipgloss.NewStyle().PaddingTop(1).PaddingLeft(2)
+	styleFrame = lipgloss.NewStyle().PaddingTop(1).PaddingLeft(1)
 )
 
 // applyTheme reassigns all color and style vars to match t.
@@ -87,8 +87,8 @@ func applyTheme(t Theme) {
 	styleScrollTrack = lipgloss.NewStyle().Foreground(colorSeparator)
 	styleScrollArrow = lipgloss.NewStyle().Foreground(colorMuted)
 	stylePanel = lipgloss.NewStyle().
-		Border(lipgloss.RoundedBorder()).
+		Border(lipgloss.NormalBorder()).
 		BorderForeground(colorBorder).
 		Padding(0, 1)
-	styleFrame = lipgloss.NewStyle().PaddingTop(1).PaddingLeft(2)
+	styleFrame = lipgloss.NewStyle().PaddingTop(1).PaddingLeft(1)
 }

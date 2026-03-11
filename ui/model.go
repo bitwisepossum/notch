@@ -370,7 +370,7 @@ func renderScrollbar(lines []string, si scrollInfo, panelWidth int) []string {
 		if i >= si.thumbStart && i < si.thumbEnd {
 			ch = styleScrollThumb.Render("█")
 		} else {
-			ch = styleScrollTrack.Render("│")
+			ch = styleScrollTrack.Render("▕")
 		}
 		out[i] = ch + line
 	}
