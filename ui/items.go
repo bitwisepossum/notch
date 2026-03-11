@@ -106,7 +106,7 @@ func (m Model) updateItems(msg tea.Msg) (tea.Model, tea.Cmd) {
 					// Click on already-selected row → toggle done
 					m.pushUndo()
 					m.toggleDone(m.flat[m.itemCursor].path)
-					m.save()
+					m.setFlash(m.save())
 					m.rebuildFlat()
 				} else {
 					m.itemCursor = idx

@@ -108,7 +108,7 @@ func (m *Model) commitInput(val string) {
 			fi := m.flat[m.itemCursor]
 			m.list.Add(fi.path, val)
 			newChild := fi.item.Children[len(fi.item.Children)-1]
-			m.save()
+			m.setFlash(m.save())
 			m.rebuildFlat()
 			m.followItem(newChild)
 		}
@@ -118,7 +118,7 @@ func (m *Model) commitInput(val string) {
 			m.pushUndo()
 			fi := m.flat[m.itemCursor]
 			_ = m.list.Edit(fi.path, val)
-			m.save()
+			m.setFlash(m.save())
 			m.rebuildFlat()
 		}
 
