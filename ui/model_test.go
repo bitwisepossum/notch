@@ -50,7 +50,7 @@ func newListPickerModel() Model {
 	m.width = 80
 	m.height = 24
 	m.mode = modeListPicker
-	m.lists = []string{"Alpha", "Beta", "Gamma", "Delta"}
+	m.lists = []listEntry{{name: "Alpha"}, {name: "Beta"}, {name: "Gamma"}, {name: "Delta"}}
 	return m
 }
 

@@ -24,7 +24,7 @@ func (m Model) updateListPicker(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if idx >= 0 && idx < len(m.lists) {
 				if idx == m.listCursor {
 					// Click on already-selected row → open
-					return m, m.openList(m.lists[m.listCursor])
+					return m, m.openList(m.lists[m.listCursor].name)
 				}
 				m.listCursor = idx
 			}
@@ -47,7 +47,7 @@ func (m Model) updateListPicker(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.listCursor = max(m.listCursor-m.halfPage(), 0)
 		case "enter":
 			if len(m.lists) > 0 {
-				return m, m.openList(m.lists[m.listCursor])
+				return m, m.openList(m.lists[m.listCursor].name)
 			}
 		case "s":
 			m.mode = modeSettings
@@ -56,7 +56,7 @@ func (m Model) updateListPicker(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.prevMode = modeListPicker
 				m.mode = modeInput
 				m.inputAction = inputRenameList
-				m.textInput.SetValue(m.lists[m.listCursor])
+				m.textInput.SetValue(m.lists[m.listCursor].name)
 				return m, m.textInput.Focus()
 			}
 		case "n":
@@ -75,7 +75,7 @@ func (m Model) updateListPicker(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		case "d":
 			if len(m.lists) > 0 {
-				name := m.lists[m.listCursor]
+				name := m.lists[m.listCursor].name
 				m.prevMode = modeListPicker
 				m.mode = modeConfirm
 				m.confirmMsg = fmt.Sprintf("Delete list %q?", name)
@@ -99,12 +99,16 @@ func (m Model) viewListPicker() string {
 		end := min(m.listScroll+visible, len(m.lists))
 		var lines []string
 		for i := m.listScroll; i < end; i++ {
-			name := m.lists[i]
+			e := m.lists[i]
+			count := ""
+			if e.totalItems > 0 {
+				count = " " + styleCount.Render(fmt.Sprintf("%d/%d", e.doneItems, e.totalItems))
+			}
 			var line string
 			if i == m.listCursor {
-				line = styleSelected.Render("  " + name)
+				line = styleSelected.Render("  " + e.name + count)
 			} else {
-				line = "  " + name
+				line = "  " + e.name + count
 			}
 			lines = append(lines, line)
 		}

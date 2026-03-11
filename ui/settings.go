@@ -77,11 +77,7 @@ func (m Model) updateSettings(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.settings.CustomDataDir = ""
 				m.setFlash(todo.SaveSettings(m.settings))
 				m.refreshListDir()
-				if lists, err := todo.ListAll(); err != nil {
-					m.setFlash(err)
-				} else {
-					m.lists = lists
-				}
+				m.lists = loadListEntries()
 				m.listCursor = 0
 				m.listScroll = 0
 			}

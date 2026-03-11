@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"slices"
 	"strings"
 	"time"
 
@@ -48,23 +47,19 @@ func (m Model) updateInput(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m *Model) commitInput(val string) {
 	switch m.inputAction {
 	case inputNewList:
-		if slices.Contains(m.lists, val) {
+		if hasListNamed(m.lists, val) {
 			m.inputErr = "a list named " + val + " already exists"
 			return
 		}
 		// Create a new empty list file, then reload.
 		newList := &todo.List{Name: val}
 		m.setFlash(todo.Save(newList))
-		if lists, err := todo.ListAll(); err != nil {
-			m.setFlash(err)
-		} else {
-			m.lists = lists
-			// Move cursor to the new list.
-			for i, name := range m.lists {
-				if name == val {
-					m.listCursor = i
-					break
-				}
+		m.lists = loadListEntries()
+		// Move cursor to the new list.
+		for i, e := range m.lists {
+			if e.name == val {
+				m.listCursor = i
+				break
 			}
 		}
 
@@ -131,17 +126,13 @@ func (m *Model) commitInput(val string) {
 		m.settings.CustomDataDir = val
 		m.setFlash(todo.SaveSettings(m.settings))
 		m.refreshListDir()
-		if lists, err := todo.ListAll(); err != nil {
-			m.setFlash(err)
-		} else {
-			m.lists = lists
-		}
+		m.lists = loadListEntries()
 		m.listCursor = 0
 		m.listScroll = 0
 
 	case inputRenameList:
-		oldName := m.lists[m.listCursor]
-		if oldName != val && slices.Contains(m.lists, val) {
+		oldName := m.lists[m.listCursor].name
+		if oldName != val && hasListNamed(m.lists, val) {
 			m.inputErr = "a list named " + val + " already exists"
 			return
 		}
@@ -165,21 +156,17 @@ func (m *Model) commitInput(val string) {
 					m.settings = s
 				}
 			}
-			if lists, err := todo.ListAll(); err != nil {
-				m.setFlash(err)
-			} else {
-				m.lists = lists
-				for i, name := range m.lists {
-					if name == val {
-						m.listCursor = i
-						break
-					}
+			m.lists = loadListEntries()
+			for i, e := range m.lists {
+				if e.name == val {
+					m.listCursor = i
+					break
 				}
 			}
 		}
 
 	case inputQuickAdd:
-		name := m.lists[m.listCursor]
+		name := m.lists[m.listCursor].name
 		list, err := todo.Load(name)
 		if err != nil {
 			return
@@ -253,7 +240,7 @@ func (m Model) viewInput() string {
 	case inputSetDeadline:
 		prompt = "Deadline (" + deadlineLabel(m.settings) + ", empty=clear): "
 	case inputQuickAdd:
-		prompt = "Add to " + m.lists[m.listCursor] + ": "
+		prompt = "Add to " + m.lists[m.listCursor].name + ": "
 	}
 	errStr := ""
 	if m.inputErr != "" {
@@ -282,11 +269,7 @@ func (m Model) updateConfirm(msg tea.Msg) (tea.Model, tea.Cmd) {
 						m.settings = s
 					}
 				}
-				if lists, err := todo.ListAll(); err != nil {
-					m.setFlash(err)
-				} else {
-					m.lists = lists
-				}
+				m.lists = loadListEntries()
 				if m.listCursor >= len(m.lists) && m.listCursor > 0 {
 					m.listCursor = len(m.lists) - 1
 				}

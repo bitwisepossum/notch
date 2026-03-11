@@ -10,6 +10,13 @@ import (
 	"charm.land/lipgloss/v2"
 )
 
+// listEntry holds the name and progress summary for one list.
+type listEntry struct {
+	name       string
+	totalItems int
+	doneItems  int
+}
+
 // mode is the active UI screen.
 type mode int
 
@@ -61,7 +68,7 @@ type Model struct {
 	themesDir      string // <defaultDataDir>/themes (never changes)
 
 	// List picker state
-	lists      []string
+	lists      []listEntry
 	listCursor int
 	listScroll int
 
@@ -155,8 +162,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// Remove fold state for lists that no longer exist on disk.
 		if len(m.settings.FoldState) > 0 {
 			existing := make(map[string]bool, len(m.lists))
-			for _, name := range m.lists {
-				existing[name] = true
+			for _, e := range m.lists {
+				existing[e.name] = true
 			}
 			s := m.settings
 			changed := false
@@ -368,8 +375,7 @@ type themesLoadedMsg struct {
 }
 
 type listsLoadedMsg struct {
-	lists []string
-	err   error
+	lists []listEntry
 }
 
 type listOpenedMsg struct {
@@ -422,10 +428,36 @@ func (m *Model) refreshListDir() {
 	}
 }
 
-// loadLists fetches all saved list names and returns a listsLoadedMsg.
-func (m Model) loadLists() tea.Msg {
+// loadListEntries fetches all list names and loads each one to compute its
+// item counts. Returns nil on ListAll failure.
+func loadListEntries() []listEntry {
 	names, err := todo.ListAll()
-	return listsLoadedMsg{lists: names, err: err}
+	if err != nil {
+		return nil
+	}
+	entries := make([]listEntry, len(names))
+	for i, name := range names {
+		entries[i].name = name
+		if list, err := todo.Load(name); err == nil {
+			entries[i].totalItems, entries[i].doneItems = subtreeCount(&todo.Item{Children: list.Items})
+		}
+	}
+	return entries
+}
+
+// hasListNamed reports whether any entry has the given name.
+func hasListNamed(lists []listEntry, name string) bool {
+	for _, e := range lists {
+		if e.name == name {
+			return true
+		}
+	}
+	return false
+}
+
+// loadLists fetches all saved lists and returns a listsLoadedMsg.
+func (m Model) loadLists() tea.Msg {
+	return listsLoadedMsg{lists: loadListEntries()}
 }
 
 // openList returns a command that loads and parses the named list file.
