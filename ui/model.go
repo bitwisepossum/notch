@@ -209,6 +209,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.String() == "ctrl+c" {
 			return m, m.saveAndQuit
 		}
+		// Global F1: toggle help sidebar
+		if msg.String() == "f1" {
+			m.showHelp = !m.showHelp
+			return m, nil
+		}
 	}
 
 	switch m.mode {
@@ -268,8 +273,12 @@ func clampScroll(cursor, scroll, visible, total int) int {
 }
 
 // panelWidth returns the inner width for the content panel.
+// When the help sidebar is hidden the panel expands to fill most of the terminal.
 func (m Model) panelWidth() int {
-	return max(m.width-33, 30)
+	if m.showHelp {
+		return max(m.width-33, 30)
+	}
+	return max(m.width-4, 30)
 }
 
 // View implements tea.Model; renders the active screen.

@@ -124,14 +124,18 @@ func (m Model) viewListPicker() string {
 	}
 
 	panel := stylePanel.Width(m.panelWidth()).Render(items.String())
-	help := lipgloss.NewStyle().PaddingTop(1).PaddingLeft(2).Render(renderHelp(listHelp))
 
 	var b strings.Builder
 	title := styleTitle.Render("NOTCH")
 	ver := styleHelpDesc.Render(" v" + Version)
 	count := styleCount.Render(fmt.Sprintf("  (%d)", len(m.lists)))
 	b.WriteString(title + ver + count + "\n")
-	b.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, panel, help))
+	if m.showHelp {
+		help := lipgloss.NewStyle().PaddingTop(1).PaddingLeft(2).Render(renderHelp(listHelp))
+		b.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, panel, help))
+	} else {
+		b.WriteString(panel)
+	}
 	if m.flashErr != "" {
 		b.WriteString("\n" + styleConfirm.Render(m.flashErr))
 	} else if m.activeListDir != "" {

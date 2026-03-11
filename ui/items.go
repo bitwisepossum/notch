@@ -686,9 +686,10 @@ func (m Model) viewItems() string {
 		if len(m.redoStack) > 0 {
 			statusBar += " " + styleHelpKey.Render("^r")
 		}
+		if !m.showHelp {
+			statusBar += " " + styleHelpDesc.Render("F1:?")
+		}
 	}
-	help := lipgloss.NewStyle().PaddingTop(1).PaddingLeft(2).Render(renderHelp(itemsHelp))
-
 	var b strings.Builder
 	title := styleTitle.Render(strings.ToUpper(m.list.Name))
 	bar := "  " + renderProgress(done, total, 14)
@@ -697,6 +698,11 @@ func (m Model) viewItems() string {
 		count += "  " + stylePrompt.Render("/") + styleHelpDesc.Render(m.searchQuery)
 	}
 	b.WriteString(title + bar + count + "\n")
-	b.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, panel+"\n"+statusBar, help))
+	if m.showHelp {
+		help := lipgloss.NewStyle().PaddingTop(1).PaddingLeft(2).Render(renderHelp(itemsHelp))
+		b.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, panel+"\n"+statusBar, help))
+	} else {
+		b.WriteString(panel + "\n" + statusBar)
+	}
 	return b.String()
 }

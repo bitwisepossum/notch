@@ -65,6 +65,9 @@ var (
 			{"s", "settings"},
 			{"q", "quit"},
 		}},
+		{pairs: []helpPair{
+			{"F1", "hide help"},
+		}},
 	}
 	settingsHelp = []helpGroup{
 		{pairs: []helpPair{
@@ -78,6 +81,9 @@ var (
 			{"←/→ h/l", "theme"},
 			{"R", "reload themes"},
 			{"esc/q", "back"},
+		}},
+		{pairs: []helpPair{
+			{"F1", "hide help"},
 		}},
 	}
 	itemsHelp = []helpGroup{
@@ -110,6 +116,9 @@ var (
 		{header: "history", pairs: []helpPair{
 			{"u", "undo"},
 			{"C-r", "redo"},
+		}},
+		{pairs: []helpPair{
+			{"F1", "hide help"},
 		}},
 	}
 	inputHelp = []helpGroup{

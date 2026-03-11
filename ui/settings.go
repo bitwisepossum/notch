@@ -200,11 +200,15 @@ func (m Model) viewSettings() string {
 	}
 
 	panel := stylePanel.Width(m.panelWidth()).Render(strings.Join(lines, "\n"))
-	help := lipgloss.NewStyle().PaddingTop(1).PaddingLeft(2).Render(renderHelp(settingsHelp))
 
 	var b strings.Builder
 	b.WriteString(styleTitle.Render("SETTINGS") + "\n")
-	b.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, panel, help))
+	if m.showHelp {
+		help := lipgloss.NewStyle().PaddingTop(1).PaddingLeft(2).Render(renderHelp(settingsHelp))
+		b.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, panel, help))
+	} else {
+		b.WriteString(panel)
+	}
 	if m.flashErr != "" {
 		b.WriteString("\n" + styleConfirm.Render(m.flashErr))
 	} else if m.themesDir != "" {
