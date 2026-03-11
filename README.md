@@ -43,6 +43,7 @@ notch
 | `r` | Rename list |
 | `d` | Delete list |
 | `s` | Settings |
+| `F1` | Toggle help sidebar |
 | `q` | Quit |
 
 ### Items
@@ -66,6 +67,7 @@ notch
 | `/` | Search |
 | `u` | Undo |
 | `Ctrl+r` | Redo |
+| `F1` | Toggle help sidebar |
 | `esc` / `q` | Back to list picker (or clear search) |
 
 ### Settings
@@ -77,6 +79,7 @@ notch
 | `c` | Clear save path (revert to default) |
 | `←` / `→` / `h` / `l` | Cycle theme / deadline format |
 | `R` | Reload themes from disk |
+| `F1` | Toggle help sidebar |
 | `esc` / `q` | Back |
 
 ## Releases

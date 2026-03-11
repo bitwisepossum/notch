@@ -4,6 +4,31 @@
 
 ---
 
+## v0.4.0 — 2026-03-11
+
+### Added
+- F1 toggles a help sidebar in all views; panel width adjusts to make room
+- Help sidebar compacts automatically when the terminal is too short: drops blank separators, then group headers, then folds into two columns
+- Hide/show completed items with `H`
+- Item count per list shown in the list picker
+- Quick-add an item directly from the list picker (`a`)
+- Undo/redo availability shown in the status bar (`u` / `^r` indicators)
+- IO errors from failed saves surfaced in the status bar
+- Long item text truncated with an ellipsis instead of overflowing
+
+### Improved
+- Status bar split: counts on the left, undo/redo and F1 hint right-aligned
+- Straight border replaces thick border; frame and scrollbar track tightened
+- Fold state preserved across move, indent, and outdent operations
+- Cursor and scroll clamped on terminal resize
+- Test coverage expanded for core logic and UI state transitions
+
+### Fixed
+- Help sidebar state (show/hide) not saved on quit
+- F1 hint inconsistently shown or clipped across views
+
+---
+
 ## v0.3.0 — 2026-03-04
 
 ### Added
