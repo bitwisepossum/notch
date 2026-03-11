@@ -64,6 +64,7 @@ func (m *Model) flattenItems(items []*todo.Item, parentPath []int, depth int) {
 func (m *Model) closeList() {
 	m.setFlash(m.save())
 	m.saveFoldState()
+	m.persistShowHelp()
 	m.list = nil
 	m.flat = nil
 	m.mode = modeListPicker

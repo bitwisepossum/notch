@@ -22,6 +22,8 @@ type Settings struct {
 	// Deadlines are still persisted to list files as YYYY-MM-DD for portability.
 	// Empty means default (YYYY-MM-DD).
 	DeadlineFormat string `json:"deadline_format,omitempty"`
+	// ShowHelp controls sidebar visibility. Nil means "never set" (show on first start).
+	ShowHelp *bool `json:"show_help,omitempty"`
 }
 
 const settingsFile = "settings.json"

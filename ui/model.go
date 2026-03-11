@@ -84,6 +84,7 @@ type Model struct {
 	undoStack      []snapshot
 	redoStack      []snapshot
 	flashErr       string // non-empty: IO error shown in status bar
+	showHelp       bool   // whether the help sidebar is visible
 
 	// Text input
 	textInput textinput.Model
@@ -150,6 +151,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.defaultDataDir = msg.defaultDataDir
 		m.activeListDir = msg.activeListDir
 		m.themesDir = filepath.Join(msg.defaultDataDir, "themes")
+		if m.settings.ShowHelp == nil {
+			m.showHelp = true // first start: show help by default
+		} else {
+			m.showHelp = *m.settings.ShowHelp
+		}
 		return m, m.loadThemesCmd
 
 	case themesLoadedMsg:
@@ -468,8 +474,17 @@ func (m Model) openList(name string) tea.Cmd {
 	}
 }
 
+// persistShowHelp writes the current showHelp preference to settings.
+func (m Model) persistShowHelp() {
+	val := m.showHelp
+	s := m.settings
+	s.ShowHelp = &val
+	_ = todo.SaveSettings(s)
+}
+
 // saveAndQuit persists the open list (if any) and signals the program to exit.
 func (m Model) saveAndQuit() tea.Msg {
+	m.persistShowHelp()
 	if m.list != nil {
 		_ = todo.Save(m.list)
 		m.saveFoldState()
