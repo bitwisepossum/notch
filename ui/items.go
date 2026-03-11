@@ -675,19 +675,31 @@ func (m Model) viewItems() string {
 	if m.flashErr != "" {
 		statusBar = styleConfirm.Render("  " + m.flashErr)
 	} else {
-		status := fmt.Sprintf("  %d done · %d remaining", done, remaining)
+		left := fmt.Sprintf("  %d done · %d remaining", done, remaining)
 		if m.hideDone && done > 0 {
-			status += fmt.Sprintf(" · %d hidden", done)
+			left += fmt.Sprintf(" · %d hidden", done)
 		}
-		statusBar = styleHelpDesc.Render(status)
+		leftStr := styleHelpDesc.Render(left)
+
+		var rightParts []string
 		if len(m.undoStack) > 0 {
-			statusBar += " " + styleHelpKey.Render("u")
+			rightParts = append(rightParts, styleHelpKey.Render("u"))
 		}
 		if len(m.redoStack) > 0 {
-			statusBar += " " + styleHelpKey.Render("^r")
+			rightParts = append(rightParts, styleHelpKey.Render("^r"))
 		}
 		if !m.showHelp {
-			statusBar += " " + styleHelpDesc.Render("F1:?")
+			rightParts = append(rightParts, styleHelpDesc.Render("F1:?"))
+		}
+		rightStr := strings.Join(rightParts, " ")
+
+		// +2 for border chars, +2 for inner padding on each side
+		totalWidth := m.panelWidth() + 4
+		gap := totalWidth - lipgloss.Width(leftStr) - lipgloss.Width(rightStr)
+		if gap > 0 && rightStr != "" {
+			statusBar = leftStr + strings.Repeat(" ", gap) + rightStr
+		} else {
+			statusBar = leftStr
 		}
 	}
 	var b strings.Builder
