@@ -22,7 +22,11 @@ type helpGroup struct {
 // renderHelp builds a vertical help sidebar from a slice of helpGroups.
 // Groups with a non-empty header show it in a muted style above their pairs.
 // Groups are separated by a blank line.
-func renderHelp(groups []helpGroup) string {
+//
+// maxLines limits the output height. When content exceeds maxLines it
+// progressively compacts: first blank separators are dropped, then group
+// headers, and only as a last resort are lines clipped. Pass 0 for no limit.
+func renderHelp(groups []helpGroup, maxLines int) string {
 	// Compute max desc width across all pairs.
 	maxDesc := 0
 	for _, g := range groups {
@@ -33,19 +37,33 @@ func renderHelp(groups []helpGroup) string {
 		}
 	}
 
-	var lines []string
-	for i, g := range groups {
-		if i > 0 {
-			lines = append(lines, "")
+	build := func(blanks, headers bool) []string {
+		var lines []string
+		for i, g := range groups {
+			if i > 0 && blanks {
+				lines = append(lines, "")
+			}
+			if headers && g.header != "" {
+				lines = append(lines, styleCount.Bold(true).Render(g.header))
+			}
+			for _, p := range g.pairs {
+				descPad := strings.Repeat(" ", maxDesc-lipgloss.Width(p.desc))
+				line := styleHelpDesc.Render(p.desc+descPad) + "  " + styleHelpKey.Render(p.keys)
+				lines = append(lines, line)
+			}
 		}
-		if g.header != "" {
-			lines = append(lines, styleCount.Bold(true).Render(g.header))
-		}
-		for _, p := range g.pairs {
-			descPad := strings.Repeat(" ", maxDesc-lipgloss.Width(p.desc))
-			line := styleHelpDesc.Render(p.desc+descPad) + "  " + styleHelpKey.Render(p.keys)
-			lines = append(lines, line)
-		}
+		return lines
+	}
+
+	lines := build(true, true)
+	if maxLines > 0 && len(lines) > maxLines {
+		lines = build(false, true)
+	}
+	if maxLines > 0 && len(lines) > maxLines {
+		lines = build(false, false)
+	}
+	if maxLines > 0 && len(lines) > maxLines {
+		lines = lines[:maxLines]
 	}
 	return strings.Join(lines, "\n")
 }

@@ -703,7 +703,7 @@ func (m Model) viewItems() string {
 	}
 	b.WriteString(title + bar + count + "\n")
 	if m.showHelp {
-		help := lipgloss.NewStyle().PaddingTop(1).PaddingLeft(2).Render(renderHelp(itemsHelp))
+		help := lipgloss.NewStyle().PaddingTop(1).PaddingLeft(2).Render(renderHelp(itemsHelp, m.helpHeight()))
 		b.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, panel+"\n"+statusBar, help))
 	} else {
 		b.WriteString(panel + "\n" + statusBar)

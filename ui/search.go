@@ -63,7 +63,7 @@ func (m Model) viewSearch() string {
 	b.WriteString(m.viewItems())
 	b.WriteString("\n")
 	b.WriteString(stylePrompt.Render("/") + " " + m.textInput.View() + "\n")
-	b.WriteString(renderHelp(searchHelp))
+	b.WriteString(renderHelp(searchHelp, 0))
 	return b.String()
 }
 

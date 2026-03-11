@@ -247,7 +247,7 @@ func (m Model) viewInput() string {
 		errStr = "   " + styleConfirm.Render(m.inputErr)
 	}
 	b.WriteString(stylePrompt.Render(prompt) + m.textInput.View() + errStr + "\n")
-	b.WriteString(renderHelp(inputHelp))
+	b.WriteString(renderHelp(inputHelp, 0))
 	return b.String()
 }
 

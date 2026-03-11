@@ -244,6 +244,13 @@ func (m Model) visibleRows() int {
 	return max(m.height-8, 1)
 }
 
+// helpHeight returns the max number of content lines the help sidebar can render
+// without overflowing the terminal. Accounts for: frame PaddingTop(1), title
+// line (1), help panel PaddingTop(1), and one row of bottom margin (1).
+func (m Model) helpHeight() int {
+	return max(m.height-4, 1)
+}
+
 // halfPage returns the half-page jump distance.
 func (m Model) halfPage() int {
 	return max(m.visibleRows()/2, 1)

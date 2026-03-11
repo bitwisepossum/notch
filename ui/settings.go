@@ -204,7 +204,7 @@ func (m Model) viewSettings() string {
 	var b strings.Builder
 	b.WriteString(styleTitle.Render("SETTINGS") + "\n")
 	if m.showHelp {
-		help := lipgloss.NewStyle().PaddingTop(1).PaddingLeft(2).Render(renderHelp(settingsHelp))
+		help := lipgloss.NewStyle().PaddingTop(1).PaddingLeft(2).Render(renderHelp(settingsHelp, m.helpHeight()))
 		b.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, panel, help))
 	} else {
 		b.WriteString(panel)

@@ -131,7 +131,7 @@ func (m Model) viewListPicker() string {
 	count := styleCount.Render(fmt.Sprintf("  (%d)", len(m.lists)))
 	b.WriteString(title + ver + count + "\n")
 	if m.showHelp {
-		help := lipgloss.NewStyle().PaddingTop(1).PaddingLeft(2).Render(renderHelp(listHelp))
+		help := lipgloss.NewStyle().PaddingTop(1).PaddingLeft(2).Render(renderHelp(listHelp, m.helpHeight()))
 		b.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, panel, help))
 	} else {
 		b.WriteString(panel)
