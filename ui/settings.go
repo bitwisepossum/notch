@@ -209,10 +209,13 @@ func (m Model) viewSettings() string {
 	} else {
 		b.WriteString(panel)
 	}
+	hint := m.helpHint()
 	if m.flashErr != "" {
-		b.WriteString("\n" + styleConfirm.Render(m.flashErr))
+		b.WriteString("\n" + m.rightAlign(styleConfirm.Render(m.flashErr), hint))
 	} else if m.themesDir != "" {
-		b.WriteString("\n" + styleHelpDesc.Render("themes: "+m.themesDir))
+		b.WriteString("\n" + m.rightAlign(styleHelpDesc.Render("themes: "+m.themesDir), hint))
+	} else if hint != "" {
+		b.WriteString("\n" + m.rightAlign("", hint))
 	}
 	return b.String()
 }

@@ -4,10 +4,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/bitwisepossum/notch/todo"
 	"charm.land/bubbles/v2/textinput"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
+	"github.com/bitwisepossum/notch/todo"
 )
 
 // listEntry holds the name and progress summary for one list.
@@ -73,18 +73,18 @@ type Model struct {
 	listScroll int
 
 	// Items browser state
-	list        *todo.List
-	flat        []flatItem
-	itemCursor  int
-	itemScroll  int
-	searchQuery    string           // active filter; empty means no filter
-	preSearchItem  *todo.Item       // item under cursor when search was opened
-	folded         map[string]bool  // paths of collapsed items
-	hideDone       bool             // when true, completed items are filtered out
-	undoStack      []snapshot
-	redoStack      []snapshot
-	flashErr       string // non-empty: IO error shown in status bar
-	showHelp       bool   // whether the help sidebar is visible
+	list          *todo.List
+	flat          []flatItem
+	itemCursor    int
+	itemScroll    int
+	searchQuery   string          // active filter; empty means no filter
+	preSearchItem *todo.Item      // item under cursor when search was opened
+	folded        map[string]bool // paths of collapsed items
+	hideDone      bool            // when true, completed items are filtered out
+	undoStack     []snapshot
+	redoStack     []snapshot
+	flashErr      string // non-empty: IO error shown in status bar
+	showHelp      bool   // whether the help sidebar is visible
 
 	// Text input
 	textInput textinput.Model
@@ -278,7 +278,31 @@ func (m Model) panelWidth() int {
 	if m.showHelp {
 		return max(m.width-33, 30)
 	}
-	return max(m.width-4, 30)
+	// Subtract 5 (not 4) to account for the frame's PaddingLeft(1), so the
+	// panel + frame together fit exactly within m.width columns.
+	return max(m.width-5, 30)
+}
+
+// helpHint returns a styled "F1 help" indicator, or "" when help is already shown.
+// Used to show a discoverable hint in the bottom line of each screen.
+func (m Model) helpHint() string {
+	if m.showHelp {
+		return ""
+	}
+	return styleHelpKey.Render("F1") + styleHelpDesc.Render(" help")
+}
+
+// right-align suffix within panelWidth
+func (m Model) rightAlign(s, suffix string) string {
+	if suffix == "" {
+		return s
+	}
+	totalWidth := m.panelWidth()
+	gap := totalWidth - lipgloss.Width(s) - lipgloss.Width(suffix)
+	if gap > 0 {
+		return s + strings.Repeat(" ", gap) + suffix
+	}
+	return s
 }
 
 // View implements tea.Model; renders the active screen.

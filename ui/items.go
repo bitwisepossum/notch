@@ -688,19 +688,11 @@ func (m Model) viewItems() string {
 		if len(m.redoStack) > 0 {
 			rightParts = append(rightParts, styleHelpKey.Render("^r"))
 		}
-		if !m.showHelp {
-			rightParts = append(rightParts, styleHelpDesc.Render("F1:?"))
+		if hint := m.helpHint(); hint != "" {
+			rightParts = append(rightParts, hint)
 		}
 		rightStr := strings.Join(rightParts, " ")
-
-		// +2 for border chars, +2 for inner padding on each side
-		totalWidth := m.panelWidth() + 4
-		gap := totalWidth - lipgloss.Width(leftStr) - lipgloss.Width(rightStr)
-		if gap > 0 && rightStr != "" {
-			statusBar = leftStr + strings.Repeat(" ", gap) + rightStr
-		} else {
-			statusBar = leftStr
-		}
+		statusBar = m.rightAlign(leftStr, rightStr)
 	}
 	var b strings.Builder
 	title := styleTitle.Render(strings.ToUpper(m.list.Name))

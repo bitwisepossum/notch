@@ -136,10 +136,13 @@ func (m Model) viewListPicker() string {
 	} else {
 		b.WriteString(panel)
 	}
+	hint := m.helpHint()
 	if m.flashErr != "" {
-		b.WriteString("\n" + styleConfirm.Render(m.flashErr))
+		b.WriteString("\n" + m.rightAlign(styleConfirm.Render(m.flashErr), hint))
 	} else if m.activeListDir != "" {
-		b.WriteString("\n" + styleHelpDesc.Render(m.activeListDir))
+		b.WriteString("\n" + m.rightAlign(styleHelpDesc.Render(m.activeListDir), hint))
+	} else if hint != "" {
+		b.WriteString("\n" + m.rightAlign("", hint))
 	}
 	return b.String()
 }
