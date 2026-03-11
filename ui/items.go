@@ -644,6 +644,12 @@ func (m Model) viewItems() string {
 			status += fmt.Sprintf(" · %d hidden", done)
 		}
 		statusBar = styleHelpDesc.Render(status)
+		if len(m.undoStack) > 0 {
+			statusBar += " " + styleHelpKey.Render("u")
+		}
+		if len(m.redoStack) > 0 {
+			statusBar += " " + styleHelpKey.Render("^r")
+		}
 	}
 	help := lipgloss.NewStyle().PaddingTop(1).PaddingLeft(2).Render(renderHelp(itemsHelp))
 
