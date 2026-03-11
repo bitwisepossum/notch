@@ -38,7 +38,7 @@ func (m *Model) pushUndo() {
 func (m *Model) applySnapshot(s snapshot) {
 	m.list = s.list
 	m.folded = s.folded
-	m.save()
+	m.setFlash(m.save())
 	m.rebuildFlat()
 	m.itemCursor = min(s.itemCursor, max(len(m.flat)-1, 0))
 	m.itemScroll = clampScroll(m.itemCursor, m.itemScroll, m.visibleRows(), len(m.flat))

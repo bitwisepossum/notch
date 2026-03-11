@@ -128,7 +128,9 @@ func (m Model) viewListPicker() string {
 	count := styleCount.Render(fmt.Sprintf("  (%d)", len(m.lists)))
 	b.WriteString(title + ver + count + "\n")
 	b.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, panel, help))
-	if m.activeListDir != "" {
+	if m.flashErr != "" {
+		b.WriteString("\n" + styleConfirm.Render(m.flashErr))
+	} else if m.activeListDir != "" {
 		b.WriteString("\n" + styleHelpDesc.Render(m.activeListDir))
 	}
 	return b.String()

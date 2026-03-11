@@ -34,7 +34,7 @@ func (m *Model) activateSetting() tea.Cmd {
 		m.cycleDeadlineFormat(1)
 	case settingsRowCascade:
 		m.settings.CascadeDone = !m.settings.CascadeDone
-		_ = todo.SaveSettings(m.settings)
+		m.setFlash(todo.SaveSettings(m.settings))
 	}
 	return nil
 }
@@ -75,9 +75,13 @@ func (m Model) updateSettings(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "c":
 			if m.settingsCursor == settingsRowPath {
 				m.settings.CustomDataDir = ""
-				_ = todo.SaveSettings(m.settings)
+				m.setFlash(todo.SaveSettings(m.settings))
 				m.refreshListDir()
-				m.lists, _ = todo.ListAll()
+				if lists, err := todo.ListAll(); err != nil {
+					m.setFlash(err)
+				} else {
+					m.lists = lists
+				}
 				m.listCursor = 0
 				m.listScroll = 0
 			}
@@ -107,7 +111,7 @@ func (m Model) updateSettings(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m *Model) cycleDeadlineFormat(delta int) {
 	idx := (deadlineFormatIdx(m.settings) + delta + len(deadlineFormats)) % len(deadlineFormats)
 	m.settings.DeadlineFormat = deadlineFormats[idx].layout
-	_ = todo.SaveSettings(m.settings)
+	m.setFlash(todo.SaveSettings(m.settings))
 }
 
 // cycleTheme advances the active theme by delta (-1 or +1), applies and saves it.
@@ -118,7 +122,7 @@ func (m *Model) cycleTheme(delta int) {
 	idx := (m.activeThemeIdx() + delta + len(m.themes)) % len(m.themes)
 	t := m.themes[idx]
 	m.settings.ActiveTheme = t.Key
-	_ = todo.SaveSettings(m.settings)
+	m.setFlash(todo.SaveSettings(m.settings))
 	if t.Error != "" {
 		applyTheme(DefaultTheme)
 	} else {
@@ -205,7 +209,9 @@ func (m Model) viewSettings() string {
 	var b strings.Builder
 	b.WriteString(styleTitle.Render("SETTINGS") + "\n")
 	b.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, panel, help))
-	if m.themesDir != "" {
+	if m.flashErr != "" {
+		b.WriteString("\n" + styleConfirm.Render(m.flashErr))
+	} else if m.themesDir != "" {
 		b.WriteString("\n" + styleHelpDesc.Render("themes: "+m.themesDir))
 	}
 	return b.String()

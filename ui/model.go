@@ -76,6 +76,7 @@ type Model struct {
 	hideDone       bool             // when true, completed items are filtered out
 	undoStack      []snapshot
 	redoStack      []snapshot
+	flashErr       string // non-empty: IO error shown in status bar
 
 	// Text input
 	textInput textinput.Model
@@ -190,6 +191,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case tea.KeyPressMsg:
+		m.flashErr = "" // dismiss any IO error on next input
 		// Global quit on ctrl+c
 		if msg.String() == "ctrl+c" {
 			return m, m.saveAndQuit
@@ -443,10 +445,19 @@ func (m Model) saveAndQuit() tea.Msg {
 	return tea.QuitMsg{}
 }
 
-// save persists the open list to disk, silently ignoring errors.
-func (m Model) save() {
+// save persists the open list to disk and returns any write error.
+func (m *Model) save() error {
 	if m.list != nil {
-		_ = todo.Save(m.list)
+		return todo.Save(m.list)
+	}
+	return nil
+}
+
+// setFlash records an IO error for display in the status bar.
+// Passing nil is a no-op.
+func (m *Model) setFlash(err error) {
+	if err != nil {
+		m.flashErr = "Error: " + err.Error()
 	}
 }
 

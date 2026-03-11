@@ -62,7 +62,7 @@ func (m *Model) flattenItems(items []*todo.Item, parentPath []int, depth int) {
 
 // closeList saves state and returns to the list picker.
 func (m *Model) closeList() {
-	m.save()
+	m.setFlash(m.save())
 	m.saveFoldState()
 	m.list = nil
 	m.flat = nil
@@ -161,7 +161,7 @@ func (m Model) updateItems(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if len(m.flat) > 0 {
 				m.pushUndo()
 				m.toggleDone(m.flat[m.itemCursor].path)
-				m.save()
+				m.setFlash(m.save())
 				m.rebuildFlat()
 			}
 		case "a":
@@ -320,7 +320,7 @@ func (m *Model) moveItem(dir int) {
 		return
 	}
 	m.rebuildFoldedFromPointers(saved)
-	m.save()
+	m.setFlash(m.save())
 	m.rebuildFlat()
 	m.followItem(fi.item)
 }
@@ -358,7 +358,7 @@ func (m *Model) indentItem() {
 		return
 	}
 	m.rebuildFoldedFromPointers(saved)
-	m.save()
+	m.setFlash(m.save())
 	m.rebuildFlat()
 	m.followItem(fi.item)
 }
@@ -387,7 +387,7 @@ func (m *Model) outdentItem() {
 		return
 	}
 	m.rebuildFoldedFromPointers(saved)
-	m.save()
+	m.setFlash(m.save())
 	m.rebuildFlat()
 	m.followItem(fi.item)
 }
@@ -635,11 +635,16 @@ func (m Model) viewItems() string {
 
 	panel := stylePanel.Width(m.panelWidth()).Render(items.String())
 	remaining := total - done
-	status := fmt.Sprintf("  %d done · %d remaining", done, remaining)
-	if m.hideDone && done > 0 {
-		status += fmt.Sprintf(" · %d hidden", done)
+	var statusBar string
+	if m.flashErr != "" {
+		statusBar = styleConfirm.Render("  " + m.flashErr)
+	} else {
+		status := fmt.Sprintf("  %d done · %d remaining", done, remaining)
+		if m.hideDone && done > 0 {
+			status += fmt.Sprintf(" · %d hidden", done)
+		}
+		statusBar = styleHelpDesc.Render(status)
 	}
-	statusBar := styleHelpDesc.Render(status)
 	help := lipgloss.NewStyle().PaddingTop(1).PaddingLeft(2).Render(renderHelp(itemsHelp))
 
 	var b strings.Builder

@@ -54,13 +54,17 @@ func (m *Model) commitInput(val string) {
 		}
 		// Create a new empty list file, then reload.
 		newList := &todo.List{Name: val}
-		_ = todo.Save(newList)
-		m.lists, _ = todo.ListAll()
-		// Move cursor to the new list.
-		for i, name := range m.lists {
-			if name == val {
-				m.listCursor = i
-				break
+		m.setFlash(todo.Save(newList))
+		if lists, err := todo.ListAll(); err != nil {
+			m.setFlash(err)
+		} else {
+			m.lists = lists
+			// Move cursor to the new list.
+			for i, name := range m.lists {
+				if name == val {
+					m.listCursor = i
+					break
+				}
 			}
 		}
 
@@ -98,7 +102,7 @@ func (m *Model) commitInput(val string) {
 				_ = m.list.Move(from, to)
 			}
 		}
-		m.save()
+		m.setFlash(m.save())
 		m.rebuildFlat()
 		// Move cursor to the new item.
 		m.itemCursor = min(m.itemCursor+1, len(m.flat)-1)
@@ -125,9 +129,13 @@ func (m *Model) commitInput(val string) {
 
 	case inputSetDataDir:
 		m.settings.CustomDataDir = val
-		_ = todo.SaveSettings(m.settings)
+		m.setFlash(todo.SaveSettings(m.settings))
 		m.refreshListDir()
-		m.lists, _ = todo.ListAll()
+		if lists, err := todo.ListAll(); err != nil {
+			m.setFlash(err)
+		} else {
+			m.lists = lists
+		}
 		m.listCursor = 0
 		m.listScroll = 0
 
@@ -146,22 +154,26 @@ func (m *Model) commitInput(val string) {
 			if err := todo.Save(list); err != nil {
 				return
 			}
-			_ = todo.Delete(oldName)
+			m.setFlash(todo.Delete(oldName))
 			// Move any persisted fold state from old name to new name.
 			s := m.settings
 			if s.FoldState != nil {
 				if entry, ok := s.FoldState[oldName]; ok {
 					delete(s.FoldState, oldName)
 					s.FoldState[val] = entry
-					_ = todo.SaveSettings(s)
+					_ = todo.SaveSettings(s) // fold state only; non-critical
 					m.settings = s
 				}
 			}
-			m.lists, _ = todo.ListAll()
-			for i, name := range m.lists {
-				if name == val {
-					m.listCursor = i
-					break
+			if lists, err := todo.ListAll(); err != nil {
+				m.setFlash(err)
+			} else {
+				m.lists = lists
+				for i, name := range m.lists {
+					if name == val {
+						m.listCursor = i
+						break
+					}
 				}
 			}
 		}
@@ -173,7 +185,7 @@ func (m *Model) commitInput(val string) {
 			return
 		}
 		list.Add(nil, val)
-		_ = todo.Save(list)
+		m.setFlash(todo.Save(list))
 
 	case inputSetDeadline:
 		if len(m.flat) == 0 {
@@ -191,7 +203,7 @@ func (m *Model) commitInput(val string) {
 			}
 			_ = m.list.SetDeadline(fi.path, d)
 		}
-		m.save()
+		m.setFlash(m.save())
 		m.rebuildFlat()
 	}
 }
@@ -260,17 +272,21 @@ func (m Model) updateConfirm(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "y":
 			switch m.confirmKind {
 			case confirmDeleteList:
-				_ = todo.Delete(m.confirmTarget)
+				m.setFlash(todo.Delete(m.confirmTarget))
 				// Remove any persisted fold state for the deleted list.
 				s := m.settings
 				if s.FoldState != nil {
 					if _, ok := s.FoldState[m.confirmTarget]; ok {
 						delete(s.FoldState, m.confirmTarget)
-						_ = todo.SaveSettings(s)
+						_ = todo.SaveSettings(s) // fold state only; non-critical
 						m.settings = s
 					}
 				}
-				m.lists, _ = todo.ListAll()
+				if lists, err := todo.ListAll(); err != nil {
+					m.setFlash(err)
+				} else {
+					m.lists = lists
+				}
 				if m.listCursor >= len(m.lists) && m.listCursor > 0 {
 					m.listCursor = len(m.lists) - 1
 				}
@@ -279,7 +295,7 @@ func (m Model) updateConfirm(msg tea.Msg) (tea.Model, tea.Cmd) {
 				saved := m.snapshotFoldedItems()
 				_ = m.list.Remove(m.confirmItemPath)
 				m.rebuildFoldedFromPointers(saved)
-				m.save()
+				m.setFlash(m.save())
 				m.rebuildFlat()
 				if m.itemCursor >= len(m.flat) && m.itemCursor > 0 {
 					m.itemCursor = len(m.flat) - 1
