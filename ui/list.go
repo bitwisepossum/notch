@@ -32,7 +32,7 @@ func (m Model) updateListPicker(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "q":
-			return m, tea.Quit
+			return m, m.saveAndQuit
 		case "j", "down":
 			if m.listCursor < len(m.lists)-1 {
 				m.listCursor++
