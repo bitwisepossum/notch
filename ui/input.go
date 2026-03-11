@@ -97,7 +97,7 @@ func (m *Model) commitInput(val string) {
 				_ = m.list.Move(from, to)
 			}
 		}
-		m.setFlash(m.save())
+		m.saveFlash()
 		m.rebuildFlat()
 		// Move cursor to the new item.
 		m.itemCursor = min(m.itemCursor+1, len(m.flat)-1)
@@ -108,7 +108,7 @@ func (m *Model) commitInput(val string) {
 			fi := m.flat[m.itemCursor]
 			m.list.Add(fi.path, val)
 			newChild := fi.item.Children[len(fi.item.Children)-1]
-			m.setFlash(m.save())
+			m.saveFlash()
 			m.rebuildFlat()
 			m.followItem(newChild)
 		}
@@ -118,7 +118,7 @@ func (m *Model) commitInput(val string) {
 			m.pushUndo()
 			fi := m.flat[m.itemCursor]
 			_ = m.list.Edit(fi.path, val)
-			m.setFlash(m.save())
+			m.saveFlash()
 			m.rebuildFlat()
 		}
 
@@ -190,7 +190,7 @@ func (m *Model) commitInput(val string) {
 			}
 			_ = m.list.SetDeadline(fi.path, d)
 		}
-		m.setFlash(m.save())
+		m.saveFlash()
 		m.rebuildFlat()
 	}
 }
@@ -278,7 +278,7 @@ func (m Model) updateConfirm(msg tea.Msg) (tea.Model, tea.Cmd) {
 				saved := m.snapshotFoldedItems()
 				_ = m.list.Remove(m.confirmItemPath)
 				m.rebuildFoldedFromPointers(saved)
-				m.setFlash(m.save())
+				m.saveFlash()
 				m.rebuildFlat()
 				if m.itemCursor >= len(m.flat) && m.itemCursor > 0 {
 					m.itemCursor = len(m.flat) - 1

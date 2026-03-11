@@ -580,6 +580,9 @@ func (m *Model) setFlash(err error) {
 	}
 }
 
+// saveFlash saves the open list and records any write error as a flash message.
+func (m *Model) saveFlash() { m.setFlash(m.save()) }
+
 // saveFoldState writes the current fold state for the open list to settings.json.
 // It stores index-based path keys alongside a content hash of the list so that
 // stale state can be detected on next load.

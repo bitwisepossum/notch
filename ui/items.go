@@ -62,7 +62,7 @@ func (m *Model) flattenItems(items []*todo.Item, parentPath []int, depth int) {
 
 // closeList saves state and returns to the list picker.
 func (m *Model) closeList() {
-	m.setFlash(m.save())
+	m.saveFlash()
 	m.saveFoldState()
 	m.persistShowHelp()
 	m.list = nil
@@ -106,7 +106,7 @@ func (m Model) updateItems(msg tea.Msg) (tea.Model, tea.Cmd) {
 					// Click on already-selected row → toggle done
 					m.pushUndo()
 					m.toggleDone(m.flat[m.itemCursor].path)
-					m.setFlash(m.save())
+					m.saveFlash()
 					m.rebuildFlat()
 				} else {
 					m.itemCursor = idx
@@ -162,7 +162,7 @@ func (m Model) updateItems(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if len(m.flat) > 0 {
 				m.pushUndo()
 				m.toggleDone(m.flat[m.itemCursor].path)
-				m.setFlash(m.save())
+				m.saveFlash()
 				m.rebuildFlat()
 			}
 		case "a":
@@ -321,7 +321,7 @@ func (m *Model) moveItem(dir int) {
 		return
 	}
 	m.rebuildFoldedFromPointers(saved)
-	m.setFlash(m.save())
+	m.saveFlash()
 	m.rebuildFlat()
 	m.followItem(fi.item)
 }
@@ -359,7 +359,7 @@ func (m *Model) indentItem() {
 		return
 	}
 	m.rebuildFoldedFromPointers(saved)
-	m.setFlash(m.save())
+	m.saveFlash()
 	m.rebuildFlat()
 	m.followItem(fi.item)
 }
@@ -388,7 +388,7 @@ func (m *Model) outdentItem() {
 		return
 	}
 	m.rebuildFoldedFromPointers(saved)
-	m.setFlash(m.save())
+	m.saveFlash()
 	m.rebuildFlat()
 	m.followItem(fi.item)
 }
