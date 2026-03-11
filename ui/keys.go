@@ -19,13 +19,40 @@ type helpGroup struct {
 	pairs  []helpPair
 }
 
+// twoColumns lays out a flat slice of lines into two side-by-side columns,
+// halving the height. The second half of lines becomes the LEFT column so the
+// help block grows leftward (into the main panel's space) rather than off the
+// right edge of the terminal. The left column is padded to a uniform width.
+func twoColumns(lines []string) []string {
+	half := (len(lines) + 1) / 2
+	right := lines[:half]  // first half → right column
+	left := lines[half:]   // second half → left column
+	maxW := 0
+	for _, l := range left {
+		if w := lipgloss.Width(l); w > maxW {
+			maxW = w
+		}
+	}
+	out := make([]string, len(right))
+	for i, r := range right {
+		if i < len(left) {
+			pad := strings.Repeat(" ", maxW-lipgloss.Width(left[i]))
+			out[i] = left[i] + pad + "  " + r
+		} else {
+			out[i] = strings.Repeat(" ", maxW+2) + r
+		}
+	}
+	return out
+}
+
 // renderHelp builds a vertical help sidebar from a slice of helpGroups.
 // Groups with a non-empty header show it in a muted style above their pairs.
 // Groups are separated by a blank line.
 //
 // maxLines limits the output height. When content exceeds maxLines it
 // progressively compacts: first blank separators are dropped, then group
-// headers, and only as a last resort are lines clipped. Pass 0 for no limit.
+// headers, then the pairs are folded into two side-by-side columns, and only
+// as a last resort are lines clipped. Pass 0 for no limit.
 func renderHelp(groups []helpGroup, maxLines int) string {
 	// Compute max desc width across all pairs.
 	maxDesc := 0
@@ -61,6 +88,9 @@ func renderHelp(groups []helpGroup, maxLines int) string {
 	}
 	if maxLines > 0 && len(lines) > maxLines {
 		lines = build(false, false)
+	}
+	if maxLines > 0 && len(lines) > maxLines {
+		lines = twoColumns(lines)
 	}
 	if maxLines > 0 && len(lines) > maxLines {
 		lines = lines[:maxLines]

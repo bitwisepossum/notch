@@ -279,10 +279,42 @@ func clampScroll(cursor, scroll, visible, total int) int {
 	return scroll
 }
 
+// activeHelpGroups returns the helpGroups that will be rendered for the current mode.
+func (m Model) activeHelpGroups() []helpGroup {
+	switch m.mode {
+	case modeItems, modeSearch:
+		return itemsHelp
+	case modeSettings:
+		return settingsHelp
+	default:
+		return listHelp
+	}
+}
+
+// helpTwoCol reports whether the help sidebar will need two columns given the
+// current terminal height. Compact rendering (no blanks, no headers) reduces
+// the line count to the bare pair count; two columns are needed if that still
+// exceeds helpHeight.
+func (m Model) helpTwoCol() bool {
+	if !m.showHelp {
+		return false
+	}
+	n := 0
+	for _, g := range m.activeHelpGroups() {
+		n += len(g.pairs)
+	}
+	return n > m.helpHeight()
+}
+
 // panelWidth returns the inner width for the content panel.
 // When the help sidebar is hidden the panel expands to fill most of the terminal.
 func (m Model) panelWidth() int {
 	if m.showHelp {
+		if m.helpTwoCol() {
+			// Two-column help is ~2× the single-column width; the offset doubles
+			// from 33 to 63 (2 PaddingLeft + col2_content + 2 sep + col1_content).
+			return max(m.width-63, 30)
+		}
 		return max(m.width-33, 30)
 	}
 	// Subtract 5 (not 4) to account for the frame's PaddingLeft(1), so the
