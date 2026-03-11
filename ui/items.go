@@ -474,6 +474,25 @@ func (m *Model) toggleFoldAll() {
 	m.itemCursor = min(m.itemCursor, max(len(m.flat)-1, 0))
 }
 
+// truncateText shortens text so its display width fits within maxWidth, appending "…" when
+// truncation occurs. Pass unstyled text; lipgloss.Width handles Unicode cell widths correctly.
+func truncateText(text string, maxWidth int) string {
+	if maxWidth <= 0 {
+		return ""
+	}
+	if lipgloss.Width(text) <= maxWidth {
+		return text
+	}
+	runes := []rune(text)
+	for i := len(runes); i > 0; i-- {
+		candidate := string(runes[:i]) + "…"
+		if lipgloss.Width(candidate) <= maxWidth {
+			return candidate
+		}
+	}
+	return "…"
+}
+
 // breadcrumb returns the › -joined names of ancestors along path (excluding the item itself).
 func breadcrumb(items []*todo.Item, path []int) string {
 	if len(path) < 2 {
@@ -601,7 +620,23 @@ func (m Model) viewItems() string {
 				deadlineBadge = "  " + ds.Render(icon+" "+dateStr)
 			}
 
-			text := fi.item.Text
+			// Compute available width for the text portion, then truncate before styling.
+			// prefix: cursor(2) + dots(2*depth) + fold(2) + check(1) + gap(2)
+			// suffix: deadlineBadge + fold count badge
+			scrollWidth := 0
+			if len(m.flat) > visible {
+				scrollWidth = 1
+			}
+			prefixWidth := 2 + 2*fi.depth + 2 + 1 + 2
+			suffixWidth := lipgloss.Width(deadlineBadge) + lipgloss.Width(suffix)
+			crumbWidth := 0
+			if m.searchQuery != "" && len(fi.path) > 1 {
+				crumbWidth = lipgloss.Width(breadcrumb(m.list.Items, fi.path) + " › ")
+			}
+			// panelWidth - 2 (border padding) - scrollbar - prefix - suffix - crumb
+			maxTextWidth := m.panelWidth() - 2 - scrollWidth - prefixWidth - suffixWidth - crumbWidth
+
+			text := truncateText(fi.item.Text, maxTextWidth)
 			if m.searchQuery != "" && !fi.item.Done {
 				text = highlightMatch(text, m.searchQuery)
 			}
@@ -609,7 +644,7 @@ func (m Model) viewItems() string {
 				text = styleDone.Render(text)
 			} else if m.searchQuery != "" && isFolded {
 				// During search, dim folded items so they stand out as having hidden children.
-				text = styleCheckDone.Render(fi.item.Text)
+				text = styleCheckDone.Render(text)
 			}
 			if m.searchQuery != "" && len(fi.path) > 1 {
 				crumb := breadcrumb(m.list.Items, fi.path)
