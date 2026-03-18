@@ -24,6 +24,9 @@ type Settings struct {
 	DeadlineFormat string `json:"deadline_format,omitempty"`
 	// ShowHelp controls sidebar visibility. Nil means "never set" (show on first start).
 	ShowHelp *bool `json:"show_help,omitempty"`
+	// LogLevel controls file logging. Empty or "off" disables logging.
+	// "minimal" logs errors only; "full" logs errors and user actions.
+	LogLevel string `json:"log_level,omitempty"`
 }
 
 const settingsFile = "settings.json"
