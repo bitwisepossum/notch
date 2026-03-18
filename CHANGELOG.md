@@ -4,6 +4,15 @@
 
 ---
 
+## v0.4.1 — 2026-03-18
+
+### Added
+- Log viewer accessible from settings; shows errors and events logged across the app, clear with a confirm prompt
+- `LogLevel` setting: configurable verbosity, persisted in settings file
+- Errors across storage, settings, and UI surfaced in the log: malformed checkboxes, theme load failures, silent save/load errors, active-theme fallback
+
+---
+
 ## v0.4.0 — 2026-03-11
 
 ### Added
