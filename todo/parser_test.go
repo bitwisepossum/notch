@@ -2,6 +2,7 @@ package todo
 
 import (
 	"bytes"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -282,5 +283,67 @@ func TestParse_NestedDeadlines(t *testing.T) {
 	wantChild := time.Date(2025, 6, 15, 0, 0, 0, 0, time.UTC)
 	if !items[0].Children[0].Deadline.Equal(wantChild) {
 		t.Errorf("child deadline: got %v, want %v", items[0].Children[0].Deadline, wantChild)
+	}
+}
+
+func TestParse_SuspectLines(t *testing.T) {
+	tests := []struct {
+		name        string
+		input       string
+		wantItems   int
+		wantSuspect []string
+	}{
+		{
+			// Lines that look like checkboxes but don't match itemRe should be collected.
+			name:        "malformed lines collected",
+			input:       "- [ ] Valid item\n[x] Missing dash\n* [x] Wrong bullet\n- [ ] Another valid\n",
+			wantItems:   2,
+			wantSuspect: []string{"[x] Missing dash", "* [x] Wrong bullet"},
+		},
+		{
+			// "- [ ]" has no text — fails itemRe (.+ requires >=1 char) but matches suspectRe.
+			name:        "empty checkbox text",
+			input:       "- [ ]\n- [ ] Valid item\n",
+			wantItems:   1,
+			wantSuspect: []string{"- [ ]"},
+		},
+		{
+			name:      "clean input produces no suspects",
+			input:     "- [ ] First\n- [x] Second\n  - [ ] Child\n",
+			wantItems: 2,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			items, suspect, err := Parse(strings.NewReader(tt.input))
+			if err != nil {
+				t.Fatal(err)
+			}
+			if len(items) != tt.wantItems {
+				t.Fatalf("expected %d items, got %d", tt.wantItems, len(items))
+			}
+			if !slices.Equal(suspect, tt.wantSuspect) {
+				t.Errorf("suspect: got %v, want %v", suspect, tt.wantSuspect)
+			}
+		})
+	}
+}
+
+func TestParse_InvalidDeadlineDate(t *testing.T) {
+	// @9999-99-99 matches deadlineRe but time.Parse fails.
+	// Current behaviour: deadline stays zero AND suffix is still stripped from text.
+	input := "- [ ] Task @9999-99-99\n"
+	items, _, err := Parse(strings.NewReader(input))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(items) != 1 {
+		t.Fatalf("expected 1 item, got %d", len(items))
+	}
+	if !items[0].Deadline.IsZero() {
+		t.Errorf("expected zero deadline for invalid date, got %v", items[0].Deadline)
+	}
+	if items[0].Text != "Task" {
+		t.Errorf("expected text %q (suffix stripped), got %q", "Task", items[0].Text)
 	}
 }
