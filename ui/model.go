@@ -406,6 +406,9 @@ type scrollInfo struct {
 
 // computeScroll calculates scroll indicators and scrollbar thumb position.
 func computeScroll(scroll, total, visible int) scrollInfo {
+	if total == 0 {
+		return scrollInfo{}
+	}
 	si := scrollInfo{
 		showUp:   scroll > 0,
 		showDown: scroll+visible < total,
