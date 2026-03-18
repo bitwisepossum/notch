@@ -145,10 +145,12 @@ func (m *Model) commitInput(val string) {
 		if oldName != val {
 			list, err := todo.Load(oldName)
 			if err != nil {
+				todo.LogError("load list for rename", slog.String("list", oldName), slog.String("err", err.Error()))
 				return
 			}
 			list.Rename(val)
 			if err := todo.Save(list); err != nil {
+				todo.LogError("save renamed list", slog.String("list", val), slog.String("err", err.Error()))
 				return
 			}
 			todo.LogEvent("list renamed", slog.String("from", oldName), slog.String("to", val))
@@ -176,6 +178,7 @@ func (m *Model) commitInput(val string) {
 		name := m.lists[m.listCursor].name
 		list, err := todo.Load(name)
 		if err != nil {
+			todo.LogError("load list for quick add", slog.String("list", name), slog.String("err", err.Error()))
 			return
 		}
 		list.Add(nil, val)
