@@ -1,6 +1,7 @@
 package todo
 
 import (
+	"log/slog"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -82,6 +83,7 @@ func Load(name string) (*List, error) {
 
 	items, err := Parse(f)
 	if err != nil {
+		LogError("parse error", slog.String("list", name), slog.String("err", err.Error()))
 		return nil, err
 	}
 	return &List{Name: name, Items: items}, nil

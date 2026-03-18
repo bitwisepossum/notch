@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"log/slog"
 	"path/filepath"
 	"strings"
 
@@ -593,6 +594,7 @@ func (m *Model) save() error {
 func (m *Model) setFlash(err error) {
 	if err != nil {
 		m.flashErr = "Error: " + err.Error()
+		todo.LogError("io error", slog.String("err", err.Error()))
 	}
 }
 

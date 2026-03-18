@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"log/slog"
 	"strconv"
 	"strings"
 	"time"
@@ -238,10 +239,14 @@ func (m Model) updateItems(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 // toggleDone toggles the done state of the item at path, cascading to children if enabled.
 func (m *Model) toggleDone(path []int) {
+	item := resolveItem(m.list.Items, path)
 	if m.settings.CascadeDone {
 		_ = m.list.ToggleCascade(path)
 	} else {
 		_ = m.list.Toggle(path)
+	}
+	if item != nil {
+		todo.LogEvent("item toggled", slog.String("list", m.list.Name), slog.String("name", item.Text), slog.Bool("done", item.Done))
 	}
 }
 

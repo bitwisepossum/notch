@@ -3,6 +3,7 @@ package todo
 import (
 	"encoding/json"
 	"io"
+	"log/slog"
 	"os"
 )
 
@@ -53,10 +54,12 @@ func LoadSettings() (Settings, error) {
 	defer f.Close()
 	data, err := io.ReadAll(f)
 	if err != nil {
+		LogError("read settings", slog.String("err", err.Error()))
 		return Settings{}, err
 	}
 	var s Settings
 	if err := json.Unmarshal(data, &s); err != nil {
+		LogError("parse settings", slog.String("err", err.Error()))
 		return Settings{}, err
 	}
 	return s, nil
@@ -70,6 +73,7 @@ func SaveSettings(s Settings) error {
 	}
 	data, err := json.MarshalIndent(s, "", "  ")
 	if err != nil {
+		LogError("marshal settings", slog.String("err", err.Error()))
 		return err
 	}
 	root, err := os.OpenRoot(dir)
@@ -79,11 +83,15 @@ func SaveSettings(s Settings) error {
 	defer root.Close()
 	f, err := root.OpenFile(settingsFile, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o600)
 	if err != nil {
+		LogError("open settings for write", slog.String("err", err.Error()))
 		return err
 	}
 	_, err = f.Write(data)
 	if closeErr := f.Close(); err == nil {
 		err = closeErr
+	}
+	if err != nil {
+		LogError("write settings", slog.String("err", err.Error()))
 	}
 	return err
 }

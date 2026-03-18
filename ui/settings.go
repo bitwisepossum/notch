@@ -38,6 +38,7 @@ func (m *Model) activateSetting() tea.Cmd {
 	case settingsRowCascade:
 		m.settings.CascadeDone = !m.settings.CascadeDone
 		m.setFlash(todo.SaveSettings(m.settings))
+		todo.LogEvent("cascade done changed", slog.Bool("enabled", m.settings.CascadeDone))
 	case settingsRowLogLevel:
 		m.cycleLogLevel(1)
 	case settingsRowViewLog:
@@ -121,6 +122,7 @@ func (m *Model) cycleDeadlineFormat(delta int) {
 	idx := (deadlineFormatIdx(m.settings) + delta + len(deadlineFormats)) % len(deadlineFormats)
 	m.settings.DeadlineFormat = deadlineFormats[idx].layout
 	m.setFlash(todo.SaveSettings(m.settings))
+	todo.LogEvent("deadline format changed", slog.String("format", deadlineFormats[idx].label))
 }
 
 var logLevels = []string{todo.LogOff, todo.LogMinimal, todo.LogFull}
@@ -153,6 +155,7 @@ func (m *Model) cycleTheme(delta int) {
 	t := m.themes[idx]
 	m.settings.ActiveTheme = t.Key
 	m.setFlash(todo.SaveSettings(m.settings))
+	todo.LogEvent("theme changed", slog.String("theme", t.Key))
 	if t.Error != "" {
 		applyTheme(DefaultTheme)
 	} else {

@@ -63,7 +63,7 @@ func InitLogger(level string) error {
 
 	pruneLog(path)
 	h.LogAttrs(context.TODO(), slog.LevelInfo, "logger started",
-		slog.String("path", sanitizePath(path)),
+		slog.String("path", SanitizePath(path)),
 		slog.String("level", level),
 	)
 	return nil
@@ -176,8 +176,8 @@ func LogEvent(msg string, attrs ...slog.Attr) {
 	h.LogAttrs(context.TODO(), slog.LevelInfo, msg, attrs...)
 }
 
-// sanitizePath replaces the user's home directory prefix with ~.
-func sanitizePath(p string) string {
+// SanitizePath replaces the user's home directory prefix with ~.
+func SanitizePath(p string) string {
 	home, err := os.UserHomeDir()
 	if err != nil || home == "" {
 		return p

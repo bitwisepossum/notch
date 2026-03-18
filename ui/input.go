@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"log/slog"
 	"strings"
 	"time"
 
@@ -54,6 +55,7 @@ func (m *Model) commitInput(val string) {
 		// Create a new empty list file, then reload.
 		newList := &todo.List{Name: val}
 		m.setFlash(todo.Save(newList))
+		todo.LogEvent("list created", slog.String("name", val))
 		m.lists = loadListEntries()
 		// Move cursor to the new list.
 		for i, e := range m.lists {
@@ -64,6 +66,7 @@ func (m *Model) commitInput(val string) {
 		}
 
 	case inputNewSibling:
+		todo.LogEvent("item added", slog.String("list", m.list.Name), slog.String("name", val))
 		m.pushUndo()
 		if len(m.flat) == 0 {
 			// Empty list — add top-level item.
@@ -104,6 +107,7 @@ func (m *Model) commitInput(val string) {
 
 	case inputNewChild:
 		if len(m.flat) > 0 {
+			todo.LogEvent("item added", slog.String("list", m.list.Name), slog.String("name", val))
 			m.pushUndo()
 			fi := m.flat[m.itemCursor]
 			m.list.Add(fi.path, val)
@@ -115,6 +119,7 @@ func (m *Model) commitInput(val string) {
 
 	case inputEditItem:
 		if len(m.flat) > 0 {
+			todo.LogEvent("item edited", slog.String("list", m.list.Name), slog.String("name", val))
 			m.pushUndo()
 			fi := m.flat[m.itemCursor]
 			_ = m.list.Edit(fi.path, val)
@@ -123,6 +128,7 @@ func (m *Model) commitInput(val string) {
 		}
 
 	case inputSetDataDir:
+		todo.LogEvent("data dir changed", slog.String("path", todo.SanitizePath(val)))
 		m.settings.CustomDataDir = val
 		m.setFlash(todo.SaveSettings(m.settings))
 		m.refreshListDir()
@@ -145,6 +151,7 @@ func (m *Model) commitInput(val string) {
 			if err := todo.Save(list); err != nil {
 				return
 			}
+			todo.LogEvent("list renamed", slog.String("from", oldName), slog.String("to", val))
 			m.setFlash(todo.Delete(oldName))
 			// Move any persisted fold state from old name to new name.
 			s := m.settings
@@ -182,6 +189,7 @@ func (m *Model) commitInput(val string) {
 		m.pushUndo()
 		if val == "" {
 			_ = m.list.SetDeadline(fi.path, time.Time{})
+			todo.LogEvent("deadline cleared", slog.String("list", m.list.Name), slog.String("item", fi.item.Text))
 		} else {
 			d, err := time.Parse(deadlineLayout(m.settings), val)
 			if err != nil {
@@ -189,6 +197,7 @@ func (m *Model) commitInput(val string) {
 				return
 			}
 			_ = m.list.SetDeadline(fi.path, d)
+			todo.LogEvent("deadline set", slog.String("list", m.list.Name), slog.String("item", fi.item.Text), slog.String("deadline", val))
 		}
 		m.saveFlash()
 		m.rebuildFlat()
@@ -265,6 +274,7 @@ func (m Model) updateConfirm(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.mode = m.prevMode
 				return m, nil
 			case confirmDeleteList:
+				todo.LogEvent("list deleted", slog.String("name", m.confirmTarget))
 				m.setFlash(todo.Delete(m.confirmTarget))
 				// Remove any persisted fold state for the deleted list.
 				s := m.settings
@@ -280,6 +290,10 @@ func (m Model) updateConfirm(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.listCursor = len(m.lists) - 1
 				}
 			case confirmDeleteItem:
+				if len(m.flat) > 0 {
+					fi := m.flat[m.itemCursor]
+					todo.LogEvent("item deleted", slog.String("list", m.list.Name), slog.String("name", fi.item.Text))
+				}
 				m.pushUndo()
 				saved := m.snapshotFoldedItems()
 				_ = m.list.Remove(m.confirmItemPath)
