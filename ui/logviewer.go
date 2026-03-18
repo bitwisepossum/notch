@@ -58,11 +58,17 @@ func (m Model) viewLogViewer() string {
 	visible := m.visibleRows()
 	total := len(m.logLines)
 
+	scrollWidth := 0
+	if total > visible {
+		scrollWidth = 1
+	}
+	maxLineWidth := m.panelWidth() - 2 - scrollWidth
+
 	lines := make([]string, visible)
 	for i := range lines {
 		lineIdx := m.logCursor + i
 		if lineIdx < total {
-			lines[i] = m.logLines[lineIdx]
+			lines[i] = truncateText(m.logLines[lineIdx], maxLineWidth)
 		}
 	}
 
