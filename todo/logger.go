@@ -58,6 +58,8 @@ var logger struct {
 	file    *os.File
 }
 
+// --- lifecycle ---
+
 // InitLogger opens the log file in DataDir and configures the logger.
 // It should be called once on startup. Calling it again reconfigures.
 func InitLogger(level string) error {
@@ -121,6 +123,39 @@ func CloseLogger() {
 	logger.handler = nil
 }
 
+// --- emit: minimal+ ---
+
+// LogError logs msg at minimal+ level (errors, IO failures, parse errors).
+// attrs are optional structured key-value pairs (use slog.String, slog.Int, etc.).
+func LogError(msg string, attrs ...slog.Attr) {
+	logger.mu.Lock()
+	h := logger.handler
+	level := logger.level
+	logger.mu.Unlock()
+
+	if h == nil || level == "" || level == LogOff {
+		return
+	}
+	h.LogAttrs(context.TODO(), slog.LevelError, msg, attrs...)
+}
+
+// --- emit: full ---
+
+// LogEvent logs msg at full level only (user actions).
+func LogEvent(msg string, attrs ...slog.Attr) {
+	logger.mu.Lock()
+	h := logger.handler
+	level := logger.level
+	logger.mu.Unlock()
+
+	if h == nil || level != LogFull {
+		return
+	}
+	h.LogAttrs(context.TODO(), slog.LevelInfo, msg, attrs...)
+}
+
+// --- file management ---
+
 // ClearLog truncates the log file to zero bytes.
 func ClearLog() error {
 	logger.mu.Lock()
@@ -176,32 +211,7 @@ func LogSize() int64 {
 	return info.Size()
 }
 
-// LogError logs msg at minimal+ level (errors, IO failures, parse errors).
-// attrs are optional structured key-value pairs (use slog.String, slog.Int, etc.).
-func LogError(msg string, attrs ...slog.Attr) {
-	logger.mu.Lock()
-	h := logger.handler
-	level := logger.level
-	logger.mu.Unlock()
-
-	if h == nil || level == "" || level == LogOff {
-		return
-	}
-	h.LogAttrs(context.TODO(), slog.LevelError, msg, attrs...)
-}
-
-// LogEvent logs msg at full level only (user actions).
-func LogEvent(msg string, attrs ...slog.Attr) {
-	logger.mu.Lock()
-	h := logger.handler
-	level := logger.level
-	logger.mu.Unlock()
-
-	if h == nil || level != LogFull {
-		return
-	}
-	h.LogAttrs(context.TODO(), slog.LevelInfo, msg, attrs...)
-}
+// --- internal ---
 
 // SanitizePath replaces the user's home directory prefix with ~.
 func SanitizePath(p string) string {
