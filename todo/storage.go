@@ -81,10 +81,13 @@ func Load(name string) (*List, error) {
 	}
 	defer f.Close()
 
-	items, err := Parse(f)
+	items, suspect, err := Parse(f)
 	if err != nil {
 		LogError("parse error", slog.String("list", name), slog.String("err", err.Error()))
 		return nil, err
+	}
+	for _, line := range suspect {
+		LogError("skipped malformed checkbox line", slog.String("list", name), slog.String("line", line))
 	}
 	return &List{Name: name, Items: items}, nil
 }

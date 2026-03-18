@@ -165,7 +165,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		} else {
 			m.showHelp = *m.settings.ShowHelp
 		}
-		_ = todo.InitLogger(m.settings.LogLevel)
+		m.setFlash(todo.InitLogger(m.settings.LogLevel))
 		return m, m.loadThemesCmd
 
 	case themesLoadedMsg:

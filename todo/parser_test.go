@@ -12,7 +12,7 @@ func TestRoundTrip_Simple(t *testing.T) {
 - [x] Second
 - [ ] Third
 `
-	items, err := Parse(strings.NewReader(input))
+	items, _, err := Parse(strings.NewReader(input))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -41,7 +41,7 @@ func TestRoundTrip_Nested(t *testing.T) {
     - [ ] Backend API
 - [x] Team standup
 `
-	items, err := Parse(strings.NewReader(input))
+	items, _, err := Parse(strings.NewReader(input))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -68,7 +68,7 @@ func TestRoundTrip_Nested(t *testing.T) {
 }
 
 func TestParse_EmptyInput(t *testing.T) {
-	items, err := Parse(strings.NewReader(""))
+	items, _, err := Parse(strings.NewReader(""))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -86,7 +86,7 @@ func TestParse_HeadingsAndBlanks(t *testing.T) {
 
 - [x] Item two
 `
-	items, err := Parse(strings.NewReader(input))
+	items, _, err := Parse(strings.NewReader(input))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -108,7 +108,7 @@ func TestParse_DeeplyNested(t *testing.T) {
       - [ ] Level 3
         - [x] Level 4
 `
-	items, err := Parse(strings.NewReader(input))
+	items, _, err := Parse(strings.NewReader(input))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -129,7 +129,7 @@ func TestParse_DeeplyNested(t *testing.T) {
 
 func TestParse_SpecialCharacters(t *testing.T) {
 	input := "- [ ] Item with [brackets] and (parens)\n- [x] Item with `backticks` & ampersand\n"
-	items, err := Parse(strings.NewReader(input))
+	items, _, err := Parse(strings.NewReader(input))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -168,7 +168,7 @@ func TestParse_MalformedIndent(t *testing.T) {
 	input := `- [ ] Parent
         - [ ] Way too deep
 `
-	items, err := Parse(strings.NewReader(input))
+	items, _, err := Parse(strings.NewReader(input))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -183,7 +183,7 @@ func TestParse_MalformedIndent(t *testing.T) {
 
 func TestRoundTrip_Deadline(t *testing.T) {
 	input := "- [ ] Buy groceries @2025-12-31\n- [x] Done task @2024-01-15\n"
-	items, err := Parse(strings.NewReader(input))
+	items, _, err := Parse(strings.NewReader(input))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -213,7 +213,7 @@ func TestRoundTrip_Deadline(t *testing.T) {
 
 func TestParse_NoDeadline(t *testing.T) {
 	input := "- [ ] Plain item\n"
-	items, err := Parse(strings.NewReader(input))
+	items, _, err := Parse(strings.NewReader(input))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -224,7 +224,7 @@ func TestParse_NoDeadline(t *testing.T) {
 
 func TestParse_LegacyObsidianDeadline(t *testing.T) {
 	input := "- [ ] Task with legacy deadline 📅 2025-06-15\n"
-	items, err := Parse(strings.NewReader(input))
+	items, _, err := Parse(strings.NewReader(input))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -252,7 +252,7 @@ func TestParse_LegacyObsidianDeadline(t *testing.T) {
 
 func TestParse_UppercaseX(t *testing.T) {
 	input := "- [X] Done with uppercase\n"
-	items, err := Parse(strings.NewReader(input))
+	items, _, err := Parse(strings.NewReader(input))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -271,7 +271,7 @@ func TestParse_NestedDeadlines(t *testing.T) {
 	input := `- [ ] Parent @2025-01-01
   - [ ] Child @2025-06-15
 `
-	items, err := Parse(strings.NewReader(input))
+	items, _, err := Parse(strings.NewReader(input))
 	if err != nil {
 		t.Fatal(err)
 	}

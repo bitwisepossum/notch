@@ -9,6 +9,11 @@ import (
 
 var itemRe = regexp.MustCompile(`^(\s*)- \[([ xX])\] (.+)$`)
 
+// suspectRe matches lines that contain a checkbox marker but don't satisfy
+// itemRe — e.g. "[x] Missing dash" or "  [x] Wrong prefix". These are logged
+// as errors to help diagnose hand-edited files that won't parse as expected.
+var suspectRe = regexp.MustCompile(`\[[ xX]\]`)
+
 // deadlineRe matches the deadline suffix: @YYYY-MM-DD
 // The legacy Obsidian Tasks format (📅 YYYY-MM-DD) is also accepted on read.
 var deadlineRe = regexp.MustCompile(`\s*(?:@|📅\s*)(\d{4}-\d{2}-\d{2})\s*$`)
@@ -17,17 +22,26 @@ var deadlineRe = regexp.MustCompile(`\s*(?:@|📅\s*)(\d{4}-\d{2}-\d{2})\s*$`)
 // It recognizes GFM checkbox lines with 2-space indentation for nesting.
 // Non-matching lines (headings, blanks) are silently skipped.
 // Obsidian Tasks deadline suffixes (📅 YYYY-MM-DD) are parsed and stripped from Text.
-func Parse(r io.Reader) ([]*Item, error) {
+//
+// The second return value contains any lines that look like checkbox items
+// (contain [ ] or [x]) but did not match the expected format. Callers may log
+// these as warnings. Parse itself never returns a non-nil error for such lines;
+// only scanner IO errors produce a non-nil error.
+func Parse(r io.Reader) ([]*Item, []string, error) {
 	scanner := bufio.NewScanner(r)
 
 	// stack tracks the parent slice at each depth level.
 	var root []*Item
+	var suspect []string
 	stack := []*[]*Item{&root}
 
 	for scanner.Scan() {
 		line := scanner.Text()
 		m := itemRe.FindStringSubmatch(line)
 		if m == nil {
+			if suspectRe.MatchString(line) {
+				suspect = append(suspect, line)
+			}
 			continue
 		}
 
@@ -66,7 +80,7 @@ func Parse(r io.Reader) ([]*Item, error) {
 	}
 
 	if err := scanner.Err(); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return root, nil
+	return root, suspect, nil
 }
