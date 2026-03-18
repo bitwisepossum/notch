@@ -6,6 +6,7 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
+	"github.com/bitwisepossum/notch/todo"
 )
 
 // updateListPicker handles messages while the list selection screen is active.
@@ -127,7 +128,7 @@ func (m Model) viewListPicker() string {
 
 	var b strings.Builder
 	title := styleTitle.Render("NOTCH")
-	ver := styleHelpDesc.Render(" v" + Version)
+	ver := styleHelpDesc.Render(" v" + todo.Version)
 	count := styleCount.Render(fmt.Sprintf("  (%d)", len(m.lists)))
 	b.WriteString(title + ver + count + "\n")
 	if m.showHelp {
