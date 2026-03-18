@@ -66,6 +66,8 @@ func LoadSettings() (Settings, error) {
 }
 
 // SaveSettings writes settings to the default app data directory.
+// The write is atomic: data goes to a temp file first, then is renamed
+// over the target. A .bak copy of the previous version is kept.
 func SaveSettings(s Settings) error {
 	dir, err := DataDir()
 	if err != nil {
@@ -76,24 +78,17 @@ func SaveSettings(s Settings) error {
 		LogError("marshal settings", slog.String("err", err.Error()))
 		return err
 	}
+	data = append(data, '\n')
 	root, err := os.OpenRoot(dir)
 	if err != nil {
 		return err
 	}
 	defer root.Close()
-	f, err := root.OpenFile(settingsFile, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o600)
-	if err != nil {
-		LogError("open settings for write", slog.String("err", err.Error()))
+	if err := atomicWrite(root, settingsFile, data, 0o600); err != nil {
+		LogError("write settings", slog.String("err", err.Error()))
 		return err
 	}
-	_, err = f.Write(data)
-	if closeErr := f.Close(); err == nil {
-		err = closeErr
-	}
-	if err != nil {
-		LogError("write settings", slog.String("err", err.Error()))
-	}
-	return err
+	return nil
 }
 
 // ListDir returns the directory where list .md files are stored.
