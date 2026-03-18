@@ -258,6 +258,12 @@ func (m Model) updateConfirm(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		case "y":
 			switch m.confirmKind {
+			case confirmClearLog:
+				m.setFlash(todo.ClearLog())
+				m.logLines = nil
+				m.logCursor = 0
+				m.mode = m.prevMode
+				return m, nil
 			case confirmDeleteList:
 				m.setFlash(todo.Delete(m.confirmTarget))
 				// Remove any persisted fold state for the deleted list.
@@ -303,6 +309,8 @@ func (m Model) viewConfirm() string {
 		underlying = m.viewListPicker()
 	case modeItems:
 		underlying = m.viewItems()
+	case modeLogViewer:
+		underlying = m.viewLogViewer()
 	}
 	bg := lipgloss.Place(m.width, m.height, lipgloss.Left, lipgloss.Top,
 		styleFrame.Render(underlying))

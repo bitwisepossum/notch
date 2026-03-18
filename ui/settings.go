@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"log/slog"
 	"strings"
 
 	"github.com/bitwisepossum/notch/todo"
@@ -15,7 +16,9 @@ const (
 	settingsRowTheme          = 1
 	settingsRowDeadlineFormat = 2
 	settingsRowCascade        = 3
-	settingsRowCount          = 4
+	settingsRowLogLevel       = 4
+	settingsRowViewLog        = 5
+	settingsRowCount          = 6
 )
 
 // activateSetting performs the action for the currently selected settings row.
@@ -35,6 +38,10 @@ func (m *Model) activateSetting() tea.Cmd {
 	case settingsRowCascade:
 		m.settings.CascadeDone = !m.settings.CascadeDone
 		m.setFlash(todo.SaveSettings(m.settings))
+	case settingsRowLogLevel:
+		m.cycleLogLevel(1)
+	case settingsRowViewLog:
+		m.openLogViewer()
 	}
 	return nil
 }
@@ -83,16 +90,22 @@ func (m Model) updateSettings(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		case "h", "left":
-			if m.settingsCursor == settingsRowTheme {
+			switch m.settingsCursor {
+			case settingsRowTheme:
 				m.cycleTheme(-1)
-			} else if m.settingsCursor == settingsRowDeadlineFormat {
+			case settingsRowDeadlineFormat:
 				m.cycleDeadlineFormat(-1)
+			case settingsRowLogLevel:
+				m.cycleLogLevel(-1)
 			}
 		case "l", "right":
-			if m.settingsCursor == settingsRowTheme {
+			switch m.settingsCursor {
+			case settingsRowTheme:
 				m.cycleTheme(1)
-			} else if m.settingsCursor == settingsRowDeadlineFormat {
+			case settingsRowDeadlineFormat:
 				m.cycleDeadlineFormat(1)
+			case settingsRowLogLevel:
+				m.cycleLogLevel(1)
 			}
 
 		case "R":
@@ -108,6 +121,27 @@ func (m *Model) cycleDeadlineFormat(delta int) {
 	idx := (deadlineFormatIdx(m.settings) + delta + len(deadlineFormats)) % len(deadlineFormats)
 	m.settings.DeadlineFormat = deadlineFormats[idx].layout
 	m.setFlash(todo.SaveSettings(m.settings))
+}
+
+var logLevels = []string{todo.LogOff, todo.LogMinimal, todo.LogFull}
+
+// logLevelIdx returns the current index of settings.LogLevel in logLevels.
+func logLevelIdx(s todo.Settings) int {
+	for i, l := range logLevels {
+		if l == s.LogLevel {
+			return i
+		}
+	}
+	return 0 // default to off
+}
+
+// cycleLogLevel advances the log level by delta (-1 or +1), saves it, and reconfigures the logger.
+func (m *Model) cycleLogLevel(delta int) {
+	idx := (logLevelIdx(m.settings) + delta + len(logLevels)) % len(logLevels)
+	m.settings.LogLevel = logLevels[idx]
+	m.setFlash(todo.SaveSettings(m.settings))
+	todo.SetLogLevel(m.settings.LogLevel)
+	todo.LogEvent("log level changed", slog.String("level", m.settings.LogLevel))
 }
 
 // cycleTheme advances the active theme by delta (-1 or +1), applies and saves it.
@@ -178,6 +212,29 @@ func (m Model) viewSettings() string {
 					return styleCheckOpen.Render("on")
 				}
 				return styleHelpDesc.Render("off")
+			}(),
+		},
+		{
+			label: "Log level",
+			value: func() string {
+				idx := logLevelIdx(m.settings)
+				total := len(logLevels)
+				pos := styleHelpDesc.Render(fmt.Sprintf("[%d/%d]", idx+1, total))
+				label := logLevels[idx]
+				if label == todo.LogOff || label == "" {
+					label = styleHelpDesc.Render(todo.LogOff)
+				}
+				return label + "  " + pos
+			}(),
+		},
+		{
+			label: "View log",
+			value: func() string {
+				sz := todo.LogSize()
+				if sz == 0 {
+					return styleHelpDesc.Render("empty")
+				}
+				return fmt.Sprintf("%.1f KB", float64(sz)/1024)
 			}(),
 		},
 	}

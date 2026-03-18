@@ -126,8 +126,22 @@ var (
 			{"c", "clear path"},
 		}},
 		{pairs: []helpPair{
-			{"←/→ h/l", "theme"},
+			{"←/→ h/l", "cycle"},
 			{"R", "reload themes"},
+			{"esc/q", "back"},
+		}},
+		{pairs: []helpPair{
+			{"F1", "hide help"},
+		}},
+	}
+	logViewerHelp = []helpGroup{
+		{pairs: []helpPair{
+			{"j/k ↑/↓", "scroll"},
+			{"PgDn/PgUp S-↑/↓", "jump"},
+			{"g/G", "top/bottom"},
+		}},
+		{pairs: []helpPair{
+			{"C", "clear log"},
 			{"esc/q", "back"},
 		}},
 		{pairs: []helpPair{

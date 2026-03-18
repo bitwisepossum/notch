@@ -27,6 +27,7 @@ const (
 	modeConfirm                // yes/no confirmation overlay
 	modeSearch                 // search/filter input overlay
 	modeSettings               // settings screen
+	modeLogViewer              // log file viewer
 )
 
 // inputAction tracks what the text input is being used for.
@@ -49,6 +50,7 @@ type confirmAction int
 const (
 	confirmDeleteList confirmAction = iota
 	confirmDeleteItem
+	confirmClearLog
 )
 
 // Model is the top-level Bubble Tea model.
@@ -95,6 +97,10 @@ type Model struct {
 	confirmKind     confirmAction
 	confirmTarget   string // list name for delete list
 	confirmItemPath []int  // item path for delete item
+
+	// Log viewer
+	logLines  []string // cached log lines
+	logCursor int      // scroll position (top visible line)
 }
 
 // New creates a new Model with default state.
@@ -143,6 +149,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.listScroll = clampScroll(m.listCursor, m.listScroll, m.visibleRows(), len(m.lists))
 		case modeSettings:
 			m.settingsCursor = min(m.settingsCursor, settingsRowCount-1)
+		case modeLogViewer:
+			m.logCursor = min(m.logCursor, max(len(m.logLines)-1, 0))
 		}
 		return m, nil
 
@@ -156,6 +164,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		} else {
 			m.showHelp = *m.settings.ShowHelp
 		}
+		_ = todo.InitLogger(m.settings.LogLevel)
 		return m, m.loadThemesCmd
 
 	case themesLoadedMsg:
@@ -229,6 +238,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m.updateSearch(msg)
 	case modeSettings:
 		return m.updateSettings(msg)
+	case modeLogViewer:
+		return m.updateLogViewer(msg)
 	}
 	return m, nil
 }
@@ -286,6 +297,8 @@ func (m Model) activeHelpGroups() []helpGroup {
 		return itemsHelp
 	case modeSettings:
 		return settingsHelp
+	case modeLogViewer:
+		return logViewerHelp
 	default:
 		return listHelp
 	}
@@ -371,6 +384,8 @@ func (m Model) View() tea.View {
 		s = m.viewSearch()
 	case modeSettings:
 		s = m.viewSettings()
+	case modeLogViewer:
+		s = m.viewLogViewer()
 	}
 
 	framed := styleFrame.Render(s)
@@ -561,6 +576,7 @@ func (m Model) saveAndQuit() tea.Msg {
 		_ = todo.Save(m.list)
 		m.saveFoldState()
 	}
+	todo.CloseLogger()
 	return tea.QuitMsg{}
 }
 
