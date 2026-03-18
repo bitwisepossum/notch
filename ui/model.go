@@ -498,6 +498,9 @@ func (m *Model) applyActiveTheme() {
 	for _, t := range m.themes {
 		if t.Key == m.settings.ActiveTheme {
 			if t.Error != "" {
+				todo.LogError("active theme invalid, using default",
+					slog.String("theme", t.Key),
+					slog.String("err", t.Error))
 				applyTheme(DefaultTheme)
 			} else {
 				applyTheme(t)
