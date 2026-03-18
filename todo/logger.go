@@ -1,3 +1,30 @@
+// Package-level logger for notch.
+//
+// # Levels
+//
+// Three levels are supported, controlled by Settings.LogLevel:
+//
+//   - "off"     — nothing is written
+//   - "minimal" — errors and IO failures only (LogError)
+//   - "full"    — everything: errors plus user-action events (LogError + LogEvent)
+//
+// # Adding log calls
+//
+// Use LogError for anything that indicates a fault: failed reads/writes, parse
+// errors, invalid data, unexpected fallbacks. These fire at "minimal" and above
+// so they are always captured when logging is on.
+//
+//	todo.LogError("parse theme", slog.String("file", fname), slog.String("err", err.Error()))
+//
+// Use LogEvent for normal user actions: item added/edited/deleted, list
+// renamed, settings changed, etc. These fire only at "full" and should never
+// be used for error paths.
+//
+//	todo.LogEvent("item toggled", slog.String("list", m.list.Name), slog.Bool("done", item.Done))
+//
+// Both functions accept optional structured attributes via slog.String,
+// slog.Bool, slog.Int, etc. Keep messages short and lowercase; put detail in
+// the attributes.
 package todo
 
 import (
