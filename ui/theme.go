@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
@@ -115,21 +116,25 @@ func LoadThemes() []Theme {
 
 	dir, err := todo.DataDir()
 	if err != nil {
+		todo.LogError("themes data dir", slog.String("err", err.Error()))
 		return themes
 	}
 
 	td := filepath.Join(dir, themesSubdir)
 	if err := os.MkdirAll(td, 0o750); err != nil {
+		todo.LogError("create themes dir", slog.String("err", err.Error()))
 		return themes
 	}
 
 	entries, err := os.ReadDir(td)
 	if err != nil {
+		todo.LogError("read themes dir", slog.String("err", err.Error()))
 		return themes
 	}
 
 	root, err := os.OpenRoot(td)
 	if err != nil {
+		todo.LogError("open themes dir", slog.String("err", err.Error()))
 		return themes
 	}
 	defer root.Close()
@@ -145,15 +150,18 @@ func LoadThemes() []Theme {
 		key := strings.TrimSuffix(fname, ".json")
 		f, err := root.Open(fname)
 		if err != nil {
+			todo.LogError("open theme", slog.String("file", fname), slog.String("err", err.Error()))
 			continue
 		}
 		data, err := io.ReadAll(f)
 		_ = f.Close()
 		if err != nil {
+			todo.LogError("read theme", slog.String("file", fname), slog.String("err", err.Error()))
 			continue
 		}
 		var t Theme
 		if err := json.Unmarshal(data, &t); err != nil {
+			todo.LogError("parse theme", slog.String("file", fname), slog.String("err", err.Error()))
 			themes = append(themes, Theme{
 				Key:   key,
 				Name:  key,
@@ -166,6 +174,7 @@ func LoadThemes() []Theme {
 			t.Name = key
 		}
 		if err := t.validate(); err != nil {
+			todo.LogError("invalid theme", slog.String("file", fname), slog.String("err", err.Error()))
 			t.Error = err.Error()
 		}
 		themes = append(themes, t)
