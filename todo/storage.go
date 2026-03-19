@@ -94,8 +94,8 @@ func Load(name string) (*List, error) {
 }
 
 // Save writes a list to its Markdown file, creating or overwriting it.
-// The write is atomic: data goes to a temp file first, then is renamed
-// over the target. A .bak copy of the previous version is kept.
+// The write is atomic: data goes to a temp file first, then renamed over
+// the target, so a crash mid-write never truncates the original.
 func Save(list *List) error {
 	root, err := openRoot()
 	if err != nil {
@@ -110,8 +110,7 @@ func Save(list *List) error {
 	return atomicWrite(root, list.Name+".md", buf.Bytes(), 0o644)
 }
 
-// atomicWrite safely writes data to name within root using a temp+rename
-// pattern. A .bak copy of the previous file is kept.
+// atomicWrite writes data to a temp file, fsyncs, then renames over name.
 func atomicWrite(root *os.Root, name string, data []byte, perm os.FileMode) error {
 	tmp := name + ".tmp"
 
@@ -119,7 +118,6 @@ func atomicWrite(root *os.Root, name string, data []byte, perm os.FileMode) erro
 	if err != nil {
 		return err
 	}
-
 	if _, err := f.Write(data); err != nil {
 		f.Close()
 		root.Remove(tmp)
@@ -135,19 +133,7 @@ func atomicWrite(root *os.Root, name string, data []byte, perm os.FileMode) erro
 		return err
 	}
 
-	// Keep a backup of the previous version.
-	bak := name + ".bak"
-	if _, err := root.Stat(name); err == nil {
-		root.Remove(bak)
-		root.Rename(name, bak)
-	}
-
-	// Rename temp to target. On failure, try to restore from backup.
-	if err := root.Rename(tmp, name); err != nil {
-		root.Rename(bak, name)
-		return err
-	}
-	return nil
+	return root.Rename(tmp, name)
 }
 
 // Delete removes a list's Markdown file.

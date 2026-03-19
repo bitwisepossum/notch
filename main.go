@@ -10,13 +10,13 @@ import (
 )
 
 func main() {
-	if err := run(os.Args[1:], os.Stdout, os.Stdin); err != nil {
+	if err := run(os.Args[1:], os.Stdout); err != nil {
 		fmt.Fprintf(os.Stderr, "notch: %v\n", err)
 		os.Exit(1)
 	}
 }
 
-func run(args []string, stdout io.Writer, stdin io.Reader) error {
+func run(args []string, stdout io.Writer) error {
 	if len(args) == 0 {
 		return runTUI()
 	}
@@ -27,10 +27,6 @@ func run(args []string, stdout io.Writer, stdin io.Reader) error {
 		return cmdCat(stdout, args[1:])
 	case "add":
 		return cmdAdd(args[1:])
-	case "done":
-		return cmdDone(args[1:])
-	case "rm":
-		return cmdRm(stdin, args[1:])
 	case "version":
 		return cmdVersion(stdout)
 	default:

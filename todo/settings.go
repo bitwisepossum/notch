@@ -66,8 +66,7 @@ func LoadSettings() (Settings, error) {
 }
 
 // SaveSettings writes settings to the default app data directory.
-// The write is atomic: data goes to a temp file first, then is renamed
-// over the target. A .bak copy of the previous version is kept.
+// The write is atomic: data goes to a temp file, then renamed over the target.
 func SaveSettings(s Settings) error {
 	dir, err := DataDir()
 	if err != nil {

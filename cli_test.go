@@ -127,91 +127,44 @@ func TestCmdAdd_JoinsArgs(t *testing.T) {
 	}
 }
 
-func TestCmdDone_Match(t *testing.T) {
-	tempHome(t)
-	todo.Save(&todo.List{Name: "todo", Items: []*todo.Item{
-		{Text: "Buy milk"},
-		{Text: "Read book"},
-	}})
-	if err := cmdDone([]string{"todo", "milk"}); err != nil {
-		t.Fatal(err)
-	}
-	list, _ := todo.Load("todo")
-	if !list.Items[0].Done {
-		t.Error("expected first item to be done")
-	}
-	if list.Items[1].Done {
-		t.Error("expected second item to remain open")
-	}
-}
-
-func TestCmdDone_NoMatch(t *testing.T) {
-	tempHome(t)
-	todo.Save(&todo.List{Name: "todo", Items: []*todo.Item{{Text: "Task"}}})
-	err := cmdDone([]string{"todo", "nonexistent"})
-	if err == nil {
-		t.Fatal("expected error for no match")
-	}
-}
-
-func TestCmdDone_AlreadyDone(t *testing.T) {
-	tempHome(t)
-	todo.Save(&todo.List{Name: "todo", Items: []*todo.Item{{Text: "Done task", Done: true}}})
-	err := cmdDone([]string{"todo", "Done"})
-	if err == nil {
-		t.Fatal("expected error for already done")
-	}
-}
-
-func TestCmdRm_Force(t *testing.T) {
-	tempHome(t)
-	todo.Save(&todo.List{Name: "trash", Items: []*todo.Item{{Text: "x"}}})
-	if err := cmdRm(strings.NewReader(""), []string{"-f", "trash"}); err != nil {
-		t.Fatal(err)
-	}
-	names, _ := todo.ListAll()
-	for _, n := range names {
-		if n == "trash" {
-			t.Error("list should have been deleted")
-		}
-	}
-}
-
-func TestCmdRm_Confirm(t *testing.T) {
-	tempHome(t)
-	todo.Save(&todo.List{Name: "keep", Items: []*todo.Item{{Text: "x"}}})
-	// Simulate typing "n"
-	if err := cmdRm(strings.NewReader("n\n"), []string{"keep"}); err != nil {
-		t.Fatal(err)
-	}
-	names, _ := todo.ListAll()
-	found := false
-	for _, n := range names {
-		if n == "keep" {
-			found = true
-		}
-	}
-	if !found {
-		t.Error("list should not have been deleted after declining")
-	}
-}
-
-func TestCmdRm_ConfirmYes(t *testing.T) {
-	tempHome(t)
-	todo.Save(&todo.List{Name: "bye", Items: []*todo.Item{{Text: "x"}}})
-	if err := cmdRm(strings.NewReader("y\n"), []string{"bye"}); err != nil {
-		t.Fatal(err)
-	}
-	// Verify it loads with not-exist error.
-	_, err := todo.Load("bye")
-	if !os.IsNotExist(err) {
-		t.Error("list should have been deleted after confirming")
-	}
-}
-
 func TestRun_UnknownCommand(t *testing.T) {
-	err := run([]string{"bogus"}, &bytes.Buffer{}, strings.NewReader(""))
+	err := run([]string{"bogus"}, &bytes.Buffer{})
+	if err == nil || !strings.Contains(err.Error(), "bogus") {
+		t.Fatalf("expected error mentioning bogus, got %v", err)
+	}
+}
+
+func TestRun_NoArgsDoesNotError(t *testing.T) {
+	// Can't actually run the TUI in tests, but verify dispatch works.
+	// Just test that "version" works through run().
+	var buf bytes.Buffer
+	if err := run([]string{"version"}, &buf); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(buf.String(), "notch v") {
+		t.Errorf("unexpected output: %q", buf.String())
+	}
+}
+
+func TestCmdAdd_BadArgs(t *testing.T) {
+	err := cmdAdd([]string{"only-list"})
 	if err == nil {
-		t.Fatal("expected error for unknown command")
+		t.Fatal("expected error for missing item text")
+	}
+}
+
+func TestCmdLs_DoesNotIncludeNonMd(t *testing.T) {
+	tempHome(t)
+	todo.Save(&todo.List{Name: "real", Items: []*todo.Item{{Text: "x"}}})
+	// Plant a non-.md file in the data dir.
+	dir, _ := todo.DataDir()
+	os.WriteFile(dir+"/notes.txt", []byte("hi"), 0o644)
+
+	var buf bytes.Buffer
+	if err := cmdLs(&buf); err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(buf.String(), "notes") {
+		t.Error("ls should only show .md lists")
 	}
 }
