@@ -129,17 +129,17 @@ func atomicWrite(root *os.Root, name string, data []byte, perm os.FileMode) erro
 		return err
 	}
 	if _, err := f.Write(data); err != nil {
-		f.Close()
-		root.Remove(tmp)
+		f.Close()          // #nosec G104
+		root.Remove(tmp)   // #nosec G104
 		return err
 	}
 	if err := f.Sync(); err != nil {
-		f.Close()
-		root.Remove(tmp)
+		f.Close()          // #nosec G104
+		root.Remove(tmp)   // #nosec G104
 		return err
 	}
 	if err := f.Close(); err != nil {
-		root.Remove(tmp)
+		root.Remove(tmp) // #nosec G104
 		return err
 	}
 

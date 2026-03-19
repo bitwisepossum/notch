@@ -245,7 +245,7 @@ func (l *List) Hash() string {
 			buf = append(buf, '|')
 			buf = append(buf, item.Deadline.Format("2006-01-02")...)
 			buf = append(buf, '\n')
-			h.Write(buf)
+			h.Write(buf) // #nosec G104 — hash.Hash.Write never errors
 			walk(item.Children, depth+1)
 		}
 	}
