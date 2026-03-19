@@ -3,6 +3,8 @@ package todo
 import (
 	"fmt"
 	"hash/fnv"
+	"slices"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -195,7 +197,7 @@ func (l *List) Move(from, to []int) error {
 	}
 
 	// Insert at destIdx.
-	*toItems = append((*toItems)[:destIdx], append([]*Item{item}, (*toItems)[destIdx:]...)...)
+	*toItems = slices.Insert(*toItems, destIdx, item)
 	return nil
 }
 
@@ -230,10 +232,20 @@ func cloneItems(items []*Item) []*Item {
 // persisted fold state is still valid for the current list.
 func (l *List) Hash() string {
 	h := fnv.New64a()
+	var buf []byte
 	var walk func(items []*Item, depth int)
 	walk = func(items []*Item, depth int) {
 		for _, item := range items {
-			fmt.Fprintf(h, "%d|%v|%s|%s\n", depth, item.Done, item.Text, item.Deadline.Format("2006-01-02"))
+			buf = buf[:0]
+			buf = strconv.AppendInt(buf, int64(depth), 10)
+			buf = append(buf, '|')
+			buf = strconv.AppendBool(buf, item.Done)
+			buf = append(buf, '|')
+			buf = append(buf, item.Text...)
+			buf = append(buf, '|')
+			buf = append(buf, item.Deadline.Format("2006-01-02")...)
+			buf = append(buf, '\n')
+			h.Write(buf)
 			walk(item.Children, depth+1)
 		}
 	}

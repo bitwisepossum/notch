@@ -13,6 +13,7 @@ import (
 func tempHome(t *testing.T) {
 	t.Helper()
 	t.Setenv("HOME", t.TempDir())
+	todo.InvalidateListDir()
 }
 
 func TestCmdVersion(t *testing.T) {

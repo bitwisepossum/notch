@@ -14,46 +14,46 @@ func (m Model) updateSearch(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "esc":
-			m.searchQuery = ""
-			m.textInput.Blur()
-			m.textInput.SetValue("")
+			m.ib.searchQuery = ""
+			m.input.textInput.Blur()
+			m.input.textInput.SetValue("")
 			m.mode = modeItems
 			m.rebuildFlat()
-			if m.preSearchItem != nil {
-				m.followItem(m.preSearchItem)
-				m.preSearchItem = nil
+			if m.ib.preSearchItem != nil {
+				m.followItem(m.ib.preSearchItem)
+				m.ib.preSearchItem = nil
 			} else {
-				m.itemCursor = min(m.itemCursor, max(len(m.flat)-1, 0))
+				m.ib.cursor = min(m.ib.cursor, max(len(m.ib.flat)-1, 0))
 			}
-			m.itemScroll = clampScroll(m.itemCursor, m.itemScroll, m.visibleRows(), len(m.flat))
+			m.ib.scroll = clampScroll(m.ib.cursor, m.ib.scroll, m.visibleRows(), len(m.ib.flat))
 			return m, nil
 		case "enter":
-			m.textInput.Blur()
+			m.input.textInput.Blur()
 			m.mode = modeItems
-			m.itemCursor = min(m.itemCursor, max(len(m.flat)-1, 0))
-			m.itemScroll = clampScroll(m.itemCursor, m.itemScroll, m.visibleRows(), len(m.flat))
+			m.ib.cursor = min(m.ib.cursor, max(len(m.ib.flat)-1, 0))
+			m.ib.scroll = clampScroll(m.ib.cursor, m.ib.scroll, m.visibleRows(), len(m.ib.flat))
 			return m, nil
 		case "up":
-			if m.itemCursor > 0 {
-				m.itemCursor--
+			if m.ib.cursor > 0 {
+				m.ib.cursor--
 			}
-			m.itemScroll = clampScroll(m.itemCursor, m.itemScroll, m.visibleRows(), len(m.flat))
+			m.ib.scroll = clampScroll(m.ib.cursor, m.ib.scroll, m.visibleRows(), len(m.ib.flat))
 			return m, nil
 		case "down":
-			if m.itemCursor < len(m.flat)-1 {
-				m.itemCursor++
+			if m.ib.cursor < len(m.ib.flat)-1 {
+				m.ib.cursor++
 			}
-			m.itemScroll = clampScroll(m.itemCursor, m.itemScroll, m.visibleRows(), len(m.flat))
+			m.ib.scroll = clampScroll(m.ib.cursor, m.ib.scroll, m.visibleRows(), len(m.ib.flat))
 			return m, nil
 		}
 	}
 
 	var cmd tea.Cmd
-	m.textInput, cmd = m.textInput.Update(msg)
-	m.searchQuery = m.textInput.Value()
+	m.input.textInput, cmd = m.input.textInput.Update(msg)
+	m.ib.searchQuery = m.input.textInput.Value()
 	m.rebuildFlat()
-	m.itemCursor = min(m.itemCursor, max(len(m.flat)-1, 0))
-	m.itemScroll = clampScroll(m.itemCursor, m.itemScroll, m.visibleRows(), len(m.flat))
+	m.ib.cursor = min(m.ib.cursor, max(len(m.ib.flat)-1, 0))
+	m.ib.scroll = clampScroll(m.ib.cursor, m.ib.scroll, m.visibleRows(), len(m.ib.flat))
 	return m, cmd
 }
 
@@ -62,7 +62,7 @@ func (m Model) viewSearch() string {
 	var b strings.Builder
 	b.WriteString(m.viewItems())
 	b.WriteString("\n")
-	b.WriteString(stylePrompt.Render("/") + " " + m.textInput.View() + "\n")
+	b.WriteString(stylePrompt.Render("/") + " " + m.input.textInput.View() + "\n")
 	b.WriteString(renderHelp(searchHelp, 0))
 	return b.String()
 }

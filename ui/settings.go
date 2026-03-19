@@ -8,7 +8,6 @@ import (
 	"github.com/bitwisepossum/notch/todo"
 
 	tea "charm.land/bubbletea/v2"
-	"charm.land/lipgloss/v2"
 )
 
 const (
@@ -28,9 +27,9 @@ func (m *Model) activateSetting() tea.Cmd {
 	case settingsRowPath:
 		m.prevMode = modeSettings
 		m.mode = modeInput
-		m.inputAction = inputSetDataDir
-		m.textInput.SetValue(m.settings.CustomDataDir)
-		return m.textInput.Focus()
+		m.input.action = inputSetDataDir
+		m.input.textInput.SetValue(m.settings.CustomDataDir)
+		return m.input.textInput.Focus()
 	case settingsRowTheme:
 		m.cycleTheme(1)
 	case settingsRowDeadlineFormat:
@@ -84,10 +83,11 @@ func (m Model) updateSettings(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.settingsCursor == settingsRowPath {
 				m.settings.CustomDataDir = ""
 				m.setFlash(todo.SaveSettings(m.settings))
+				todo.InvalidateListDir()
 				m.refreshListDir()
-				m.lists = loadListEntries()
-				m.listCursor = 0
-				m.listScroll = 0
+				m.lp.lists = loadListEntries()
+				m.lp.cursor = 0
+				m.lp.scroll = 0
 			}
 
 		case "h", "left":
@@ -261,21 +261,14 @@ func (m Model) viewSettings() string {
 
 	panel := stylePanel.Width(m.panelWidth()).Render(strings.Join(lines, "\n"))
 
-	var b strings.Builder
-	b.WriteString(styleTitle.Render("SETTINGS") + "\n")
-	if m.showHelp {
-		help := lipgloss.NewStyle().PaddingTop(1).PaddingLeft(2).Render(renderHelp(settingsHelp, m.helpHeight()))
-		b.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, panel, help))
-	} else {
-		b.WriteString(panel)
-	}
 	hint := m.helpHint()
+	var statusBar string
 	if m.flashErr != "" {
-		b.WriteString("\n" + m.rightAlign(styleConfirm.Render(m.flashErr), hint))
+		statusBar = m.rightAlign(styleConfirm.Render(m.flashErr), hint)
 	} else if m.themesDir != "" {
-		b.WriteString("\n" + m.rightAlign(styleHelpDesc.Render("themes: "+m.themesDir), hint))
+		statusBar = m.rightAlign(styleHelpDesc.Render("themes: "+m.themesDir), hint)
 	} else if hint != "" {
-		b.WriteString("\n" + m.rightAlign("", hint))
+		statusBar = m.rightAlign("", hint)
 	}
-	return b.String()
+	return m.layoutScreen(styleTitle.Render("SETTINGS"), panel, statusBar)
 }

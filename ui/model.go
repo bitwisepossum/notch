@@ -54,54 +54,71 @@ const (
 	confirmClearLog
 )
 
-// Model is the top-level Bubble Tea model.
-type Model struct {
-	mode        mode
-	prevMode    mode // screen behind input/confirm overlay
-	width       int
-	height      int
-	inputAction inputAction
+// listPicker holds list selection screen state.
+type listPicker struct {
+	lists  []listEntry
+	cursor int
+	scroll int
+}
 
-	// Settings
-	settings       todo.Settings
-	themes         []Theme
-	settingsCursor int    // 0=save path, 1=theme
-	defaultDataDir string // resolved OS default data dir (never changes)
-	activeListDir  string // current list storage dir (custom or default)
-	themesDir      string // <defaultDataDir>/themes (never changes)
-
-	// List picker state
-	lists      []listEntry
-	listCursor int
-	listScroll int
-
-	// Items browser state
+// itemBrowser holds item browsing/editing state for an open list.
+type itemBrowser struct {
 	list          *todo.List
 	flat          []flatItem
-	itemCursor    int
-	itemScroll    int
+	cursor        int
+	scroll        int
 	searchQuery   string          // active filter; empty means no filter
 	preSearchItem *todo.Item      // item under cursor when search was opened
 	folded        map[string]bool // paths of collapsed items
 	hideDone      bool            // when true, completed items are filtered out
 	undoStack     []snapshot
 	redoStack     []snapshot
-	flashErr      string // non-empty: IO error shown in status bar
-	showHelp      bool   // whether the help sidebar is visible
+}
 
-	// Text input
+// inputState holds text input overlay state.
+type inputState struct {
 	textInput textinput.Model
-	inputErr  string // non-empty while input overlay shows an error
+	action    inputAction
+	err       string // non-empty while input overlay shows an error
+}
 
-	// Confirm dialog
-	confirmMsg      string
-	confirmKind     confirmAction
-	confirmTarget   string // list name for delete list
-	confirmItemPath []int  // item path for delete item
+// confirmState holds confirmation dialog state.
+type confirmState struct {
+	msg      string
+	kind     confirmAction
+	target   string // list name for delete list
+	itemPath []int  // item path for delete item
+}
 
-	// Log viewer
-	logLines  []string // cached log lines
-	logCursor int      // scroll position (top visible line)
+// logViewer holds log file viewer state.
+type logViewer struct {
+	lines  []string // cached log lines
+	cursor int      // scroll position (top visible line)
+}
+
+// Model is the top-level Bubble Tea model.
+type Model struct {
+	mode     mode
+	prevMode mode // screen behind input/confirm overlay
+	width    int
+	height   int
+
+	// Settings & UI state
+	settings       todo.Settings
+	uiState        UIState
+	themes         []Theme
+	settingsCursor int    // 0=save path, 1=theme
+	defaultDataDir string // resolved OS default data dir (never changes)
+	activeListDir  string // current list storage dir (custom or default)
+	themesDir      string // <defaultDataDir>/themes (never changes)
+	flashErr       string // non-empty: IO error shown in status bar
+	showHelp       bool   // whether the help sidebar is visible
+
+	lp      listPicker
+	ib      itemBrowser
+	input   inputState
+	confirm confirmState
+	log     logViewer
 }
 
 // New creates a new Model with default state.
@@ -120,9 +137,9 @@ func New() Model {
 	ti.SetStyles(s)
 
 	return Model{
-		mode:      modeListPicker,
-		textInput: ti,
-		folded:    make(map[string]bool),
+		mode:  modeListPicker,
+		input: inputState{textInput: ti},
+		ib:    itemBrowser{folded: make(map[string]bool)},
 	}
 }
 
@@ -139,31 +156,32 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.height = msg.Height
 		switch m.mode {
 		case modeItems:
-			if len(m.flat) > 0 {
-				m.itemCursor = min(m.itemCursor, len(m.flat)-1)
+			if len(m.ib.flat) > 0 {
+				m.ib.cursor = min(m.ib.cursor, len(m.ib.flat)-1)
 			}
-			m.itemScroll = clampScroll(m.itemCursor, m.itemScroll, m.visibleRows(), len(m.flat))
+			m.ib.scroll = clampScroll(m.ib.cursor, m.ib.scroll, m.visibleRows(), len(m.ib.flat))
 		case modeListPicker:
-			if len(m.lists) > 0 {
-				m.listCursor = min(m.listCursor, len(m.lists)-1)
+			if len(m.lp.lists) > 0 {
+				m.lp.cursor = min(m.lp.cursor, len(m.lp.lists)-1)
 			}
-			m.listScroll = clampScroll(m.listCursor, m.listScroll, m.visibleRows(), len(m.lists))
+			m.lp.scroll = clampScroll(m.lp.cursor, m.lp.scroll, m.visibleRows(), len(m.lp.lists))
 		case modeSettings:
 			m.settingsCursor = min(m.settingsCursor, settingsRowCount-1)
 		case modeLogViewer:
-			m.logCursor = min(m.logCursor, max(len(m.logLines)-1, 0))
+			m.log.cursor = min(m.log.cursor, max(len(m.log.lines)-1, 0))
 		}
 		return m, nil
 
 	case settingsLoadedMsg:
 		m.settings = msg.settings
+		m.uiState = msg.uiState
 		m.defaultDataDir = msg.defaultDataDir
 		m.activeListDir = msg.activeListDir
 		m.themesDir = filepath.Join(msg.defaultDataDir, "themes")
-		if m.settings.ShowHelp == nil {
+		if m.uiState.ShowHelp == nil {
 			m.showHelp = true // first start: show help by default
 		} else {
-			m.showHelp = *m.settings.ShowHelp
+			m.showHelp = *m.uiState.ShowHelp
 		}
 		m.setFlash(todo.InitLogger(m.settings.LogLevel))
 		return m, m.loadThemesCmd
@@ -174,24 +192,24 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, m.loadLists
 
 	case listsLoadedMsg:
-		m.lists = msg.lists
+		m.lp.lists = msg.lists
 		// Remove fold state for lists that no longer exist on disk.
-		if len(m.settings.FoldState) > 0 {
-			existing := make(map[string]bool, len(m.lists))
-			for _, e := range m.lists {
+		if len(m.uiState.FoldState) > 0 {
+			existing := make(map[string]bool, len(m.lp.lists))
+			for _, e := range m.lp.lists {
 				existing[e.name] = true
 			}
-			s := m.settings
+			us := m.uiState
 			changed := false
-			for name := range s.FoldState {
+			for name := range us.FoldState {
 				if !existing[name] {
-					delete(s.FoldState, name)
+					delete(us.FoldState, name)
 					changed = true
 				}
 			}
 			if changed {
-				_ = todo.SaveSettings(s)
-				m.settings = s
+				_ = saveUIState(us)
+				m.uiState = us
 			}
 		}
 		return m, nil
@@ -200,15 +218,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.err != nil {
 			return m, nil
 		}
-		m.list = msg.list
+		m.ib.list = msg.list
 		m.mode = modeItems
-		m.itemCursor = 0
-		m.itemScroll = 0
-		m.searchQuery = ""
-		m.hideDone = false
-		m.folded = make(map[string]bool)
-		m.undoStack = m.undoStack[:0]
-		m.redoStack = m.redoStack[:0]
+		m.ib.cursor = 0
+		m.ib.scroll = 0
+		m.ib.searchQuery = ""
+		m.ib.hideDone = false
+		m.ib.folded = make(map[string]bool)
+		m.ib.undoStack = m.ib.undoStack[:0]
+		m.ib.redoStack = m.ib.redoStack[:0]
 		m.loadFoldState()
 		m.rebuildFlat()
 		return m, nil
@@ -268,25 +286,38 @@ func (m Model) halfPage() int {
 	return max(m.visibleRows()/2, 1)
 }
 
-// clampScroll adjusts scroll so that cursor is within the visible window.
-// When total > visible, scroll arrows occupy the first and last visible rows,
-// so the cursor is kept within the inner content rows.
+// clampScroll adjusts scroll so that cursor is within the visible window,
+// then accounts for scroll arrow indicators.
 func clampScroll(cursor, scroll, visible, total int) int {
+	scroll = basicClamp(cursor, scroll, visible)
+	scroll = adjustForArrows(cursor, scroll, visible, total)
+	return scroll
+}
+
+// basicClamp ensures cursor is within [scroll, scroll+visible).
+func basicClamp(cursor, scroll, visible int) int {
 	if cursor < scroll {
 		scroll = cursor
 	}
 	if cursor >= scroll+visible {
 		scroll = cursor - visible + 1
 	}
-	if total > visible {
-		// ▲ arrow occupies lines[0] when scroll > 0; keep cursor below it.
-		if scroll > 0 && cursor <= scroll {
-			scroll = max(cursor-1, 0)
-		}
-		// ▼ arrow occupies lines[visible-1] when more content exists below.
-		if scroll+visible < total && cursor >= scroll+visible-1 {
-			scroll = cursor - visible + 2
-		}
+	return scroll
+}
+
+// adjustForArrows shifts scroll when scroll arrows occupy the first/last
+// visible rows, keeping the cursor off those indicator rows.
+func adjustForArrows(cursor, scroll, visible, total int) int {
+	if total <= visible {
+		return scroll
+	}
+	// ▲ arrow occupies lines[0] when scroll > 0; keep cursor below it.
+	if scroll > 0 && cursor <= scroll {
+		scroll = max(cursor-1, 0)
+	}
+	// ▼ arrow occupies lines[visible-1] when more content exists below.
+	if scroll+visible < total && cursor >= scroll+visible-1 {
+		scroll = cursor - visible + 2
 	}
 	return scroll
 }
@@ -463,6 +494,7 @@ func renderScrollbar(lines []string, si scrollInfo, panelWidth int) []string {
 
 type settingsLoadedMsg struct {
 	settings       todo.Settings
+	uiState        UIState
 	defaultDataDir string
 	activeListDir  string
 }
@@ -483,9 +515,10 @@ type listOpenedMsg struct {
 // loadSettingsCmd loads settings from disk and returns a settingsLoadedMsg.
 func (m Model) loadSettingsCmd() tea.Msg {
 	s, _ := todo.LoadSettings()
+	us, _ := loadUIState()
 	defaultDir, _ := todo.DataDir()
 	activeDir, _ := todo.ListDir()
-	return settingsLoadedMsg{settings: s, defaultDataDir: defaultDir, activeListDir: activeDir}
+	return settingsLoadedMsg{settings: s, uiState: us, defaultDataDir: defaultDir, activeListDir: activeDir}
 }
 
 // loadThemesCmd scans the themes directory and returns a themesLoadedMsg.
@@ -568,19 +601,19 @@ func (m Model) openList(name string) tea.Cmd {
 	}
 }
 
-// persistShowHelp writes the current showHelp preference to settings.
+// persistShowHelp writes the current showHelp preference to UI state.
 func (m Model) persistShowHelp() {
 	val := m.showHelp
-	s := m.settings
-	s.ShowHelp = &val
-	_ = todo.SaveSettings(s)
+	us := m.uiState
+	us.ShowHelp = &val
+	_ = saveUIState(us)
 }
 
 // saveAndQuit persists the open list (if any) and signals the program to exit.
 func (m Model) saveAndQuit() tea.Msg {
 	m.persistShowHelp()
-	if m.list != nil {
-		_ = todo.Save(m.list)
+	if m.ib.list != nil {
+		_ = todo.Save(m.ib.list)
 		m.saveFoldState()
 	}
 	todo.CloseLogger()
@@ -589,8 +622,8 @@ func (m Model) saveAndQuit() tea.Msg {
 
 // save persists the open list to disk and returns any write error.
 func (m *Model) save() error {
-	if m.list != nil {
-		return todo.Save(m.list)
+	if m.ib.list != nil {
+		return todo.Save(m.ib.list)
 	}
 	return nil
 }
@@ -607,48 +640,48 @@ func (m *Model) setFlash(err error) {
 // saveFlash saves the open list and records any write error as a flash message.
 func (m *Model) saveFlash() { m.setFlash(m.save()) }
 
-// saveFoldState writes the current fold state for the open list to settings.json.
+// saveFoldState writes the current fold state for the open list to ui_state.json.
 // It stores index-based path keys alongside a content hash of the list so that
 // stale state can be detected on next load.
 func (m Model) saveFoldState() {
-	if m.list == nil {
+	if m.ib.list == nil {
 		return
 	}
 	var paths []string
-	for k := range m.folded {
+	for k := range m.ib.folded {
 		paths = append(paths, k)
 	}
-	s := m.settings
+	us := m.uiState
 	if len(paths) == 0 {
-		if s.FoldState != nil {
-			delete(s.FoldState, m.list.Name)
+		if us.FoldState != nil {
+			delete(us.FoldState, m.ib.list.Name)
 		}
 	} else {
-		if s.FoldState == nil {
-			s.FoldState = make(map[string]todo.SavedFolds)
+		if us.FoldState == nil {
+			us.FoldState = make(map[string]SavedFolds)
 		}
-		s.FoldState[m.list.Name] = todo.SavedFolds{
-			Hash:  m.list.Hash(),
+		us.FoldState[m.ib.list.Name] = SavedFolds{
+			Hash:  m.ib.list.Hash(),
 			Paths: paths,
 		}
 	}
-	_ = todo.SaveSettings(s)
+	_ = saveUIState(us)
 }
 
-// loadFoldState restores fold state for the open list from settings.
+// loadFoldState restores fold state for the open list from UI state.
 // If the stored hash doesn't match the current list content, fold state is discarded.
 func (m *Model) loadFoldState() {
-	if m.list == nil {
+	if m.ib.list == nil {
 		return
 	}
-	entry, ok := m.settings.FoldState[m.list.Name]
+	entry, ok := m.uiState.FoldState[m.ib.list.Name]
 	if !ok || len(entry.Paths) == 0 {
 		return
 	}
-	if entry.Hash != m.list.Hash() {
+	if entry.Hash != m.ib.list.Hash() {
 		return
 	}
 	for _, p := range entry.Paths {
-		m.folded[p] = true
+		m.ib.folded[p] = true
 	}
 }

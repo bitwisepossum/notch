@@ -110,6 +110,16 @@ func Save(list *List) error {
 	return atomicWrite(root, list.Name+".md", buf.Bytes(), 0o644)
 }
 
+// AtomicWriteFile writes data atomically to dir/name.
+func AtomicWriteFile(dir, name string, data []byte, perm os.FileMode) error {
+	root, err := os.OpenRoot(dir)
+	if err != nil {
+		return err
+	}
+	defer root.Close()
+	return atomicWrite(root, name, data, perm)
+}
+
 // atomicWrite writes data to a temp file, fsyncs, then renames over name.
 func atomicWrite(root *os.Root, name string, data []byte, perm os.FileMode) error {
 	tmp := name + ".tmp"

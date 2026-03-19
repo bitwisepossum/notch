@@ -29,7 +29,7 @@ func newTestModel() Model {
 	m.width = 80
 	m.height = 24
 	m.mode = modeItems
-	m.list = &todo.List{
+	m.ib.list = &todo.List{
 		Name: "test",
 		Items: []*todo.Item{
 			{Text: "First", Children: []*todo.Item{
@@ -50,7 +50,7 @@ func newListPickerModel() Model {
 	m.width = 80
 	m.height = 24
 	m.mode = modeListPicker
-	m.lists = []listEntry{{name: "Alpha"}, {name: "Beta"}, {name: "Gamma"}, {name: "Delta"}}
+	m.lp.lists = []listEntry{{name: "Alpha"}, {name: "Beta"}, {name: "Gamma"}, {name: "Delta"}}
 	return m
 }
 
@@ -79,10 +79,10 @@ func TestItemsCursorNavigation(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			m := newTestModel()
-			m.itemCursor = tt.start
+			m.ib.cursor = tt.start
 			m = update(t, m, tt.msg)
-			if m.itemCursor != tt.expect {
-				t.Errorf("cursor = %d, want %d", m.itemCursor, tt.expect)
+			if m.ib.cursor != tt.expect {
+				t.Errorf("cursor = %d, want %d", m.ib.cursor, tt.expect)
 			}
 		})
 	}
@@ -90,72 +90,72 @@ func TestItemsCursorNavigation(t *testing.T) {
 
 func TestItemsToggleDone(t *testing.T) {
 	m := newTestModel()
-	m.itemCursor = 0 // "First" — undone
+	m.ib.cursor = 0 // "First" — undone
 
 	m = update(t, m, specialKey(tea.KeySpace))
 
-	if !m.list.Items[0].Done {
+	if !m.ib.list.Items[0].Done {
 		t.Error("expected First to be done after space")
 	}
 
 	// Toggle back.
 	m = update(t, m, specialKey(tea.KeyEnter))
-	if m.list.Items[0].Done {
+	if m.ib.list.Items[0].Done {
 		t.Error("expected First to be undone after enter")
 	}
 }
 
 func TestItemsFoldUnfold(t *testing.T) {
 	m := newTestModel()
-	m.itemCursor = 0 // "First" has children, expanded by default.
+	m.ib.cursor = 0 // "First" has children, expanded by default.
 
-	initialLen := len(m.flat)
+	initialLen := len(m.ib.flat)
 
 	// Fold with 'f'.
 	m = update(t, m, key('f'))
-	if !m.folded[pathKey([]int{0})] {
+	if !m.ib.folded[pathKey([]int{0})] {
 		t.Error("expected First to be folded")
 	}
-	if len(m.flat) >= initialLen {
+	if len(m.ib.flat) >= initialLen {
 		t.Error("expected fewer flat items after fold")
 	}
 
 	// Unfold with 'f'.
 	m = update(t, m, key('f'))
-	if m.folded[pathKey([]int{0})] {
+	if m.ib.folded[pathKey([]int{0})] {
 		t.Error("expected First to be unfolded")
 	}
-	if len(m.flat) != initialLen {
-		t.Errorf("expected %d flat items, got %d", initialLen, len(m.flat))
+	if len(m.ib.flat) != initialLen {
+		t.Errorf("expected %d flat items, got %d", initialLen, len(m.ib.flat))
 	}
 }
 
 func TestItemsFoldLeft(t *testing.T) {
 	m := newTestModel()
-	m.itemCursor = 0 // "First", expanded
+	m.ib.cursor = 0 // "First", expanded
 
 	// Left arrow folds.
 	m = update(t, m, specialKey(tea.KeyLeft))
-	if !m.folded[pathKey([]int{0})] {
+	if !m.ib.folded[pathKey([]int{0})] {
 		t.Error("expected First to be folded via left arrow")
 	}
 
 	// Left again on folded item with depth 0 — stays.
 	m = update(t, m, specialKey(tea.KeyLeft))
-	if m.itemCursor != 0 {
-		t.Errorf("cursor should stay at 0, got %d", m.itemCursor)
+	if m.ib.cursor != 0 {
+		t.Errorf("cursor should stay at 0, got %d", m.ib.cursor)
 	}
 }
 
 func TestItemsFoldRight(t *testing.T) {
 	m := newTestModel()
-	m.itemCursor = 0
-	m.folded[pathKey([]int{0})] = true
+	m.ib.cursor = 0
+	m.ib.folded[pathKey([]int{0})] = true
 	m.rebuildFlat()
 
 	// Right arrow unfolds.
 	m = update(t, m, specialKey(tea.KeyRight))
-	if m.folded[pathKey([]int{0})] {
+	if m.ib.folded[pathKey([]int{0})] {
 		t.Error("expected First to be unfolded via right arrow")
 	}
 }
@@ -165,66 +165,66 @@ func TestItemsFoldAll(t *testing.T) {
 
 	// Z folds all.
 	m = update(t, m, key('Z'))
-	if len(m.folded) == 0 {
+	if len(m.ib.folded) == 0 {
 		t.Error("expected some items folded after Z")
 	}
 
 	// Z again unfolds all.
 	m = update(t, m, key('Z'))
-	if len(m.folded) != 0 {
+	if len(m.ib.folded) != 0 {
 		t.Error("expected all items unfolded after second Z")
 	}
 }
 
 func TestItemsHideDone(t *testing.T) {
 	m := newTestModel()
-	before := len(m.flat)
+	before := len(m.ib.flat)
 
 	// H toggles hide done.
 	m = update(t, m, key('H'))
-	if !m.hideDone {
+	if !m.ib.hideDone {
 		t.Error("expected hideDone=true after H")
 	}
-	if len(m.flat) >= before {
+	if len(m.ib.flat) >= before {
 		t.Error("expected fewer items with done hidden")
 	}
 
 	// H again shows them.
 	m = update(t, m, key('H'))
-	if m.hideDone {
+	if m.ib.hideDone {
 		t.Error("expected hideDone=false after second H")
 	}
-	if len(m.flat) != before {
-		t.Errorf("expected %d items, got %d", before, len(m.flat))
+	if len(m.ib.flat) != before {
+		t.Errorf("expected %d items, got %d", before, len(m.ib.flat))
 	}
 }
 
 func TestItemsUndo(t *testing.T) {
 	m := newTestModel()
-	m.itemCursor = 0
-	original := m.list.Items[0].Done
+	m.ib.cursor = 0
+	original := m.ib.list.Items[0].Done
 
 	// Toggle done, then undo.
 	m = update(t, m, specialKey(tea.KeySpace))
-	if m.list.Items[0].Done == original {
+	if m.ib.list.Items[0].Done == original {
 		t.Fatal("toggle should have changed done state")
 	}
 
 	m = update(t, m, key('u'))
-	if m.list.Items[0].Done != original {
+	if m.ib.list.Items[0].Done != original {
 		t.Error("undo should restore original done state")
 	}
 }
 
 func TestItemsRedo(t *testing.T) {
 	m := newTestModel()
-	m.itemCursor = 0
+	m.ib.cursor = 0
 
 	m = update(t, m, specialKey(tea.KeySpace)) // toggle
-	toggled := m.list.Items[0].Done
+	toggled := m.ib.list.Items[0].Done
 	m = update(t, m, key('u'))                  // undo
 	m = update(t, m, ctrlKey('r'))              // redo
-	if m.list.Items[0].Done != toggled {
+	if m.ib.list.Items[0].Done != toggled {
 		t.Error("redo should restore toggled state")
 	}
 }
@@ -245,7 +245,7 @@ func TestItemsExitToListPicker(t *testing.T) {
 			if m.mode != modeListPicker {
 				t.Errorf("mode = %d, want modeListPicker", m.mode)
 			}
-			if m.list != nil {
+			if m.ib.list != nil {
 				t.Error("list should be nil after exit")
 			}
 		})
@@ -266,8 +266,8 @@ func TestItemsAddSibling(t *testing.T) {
 	if m.mode != modeInput {
 		t.Errorf("mode = %d, want modeInput", m.mode)
 	}
-	if m.inputAction != inputNewSibling {
-		t.Errorf("inputAction = %d, want inputNewSibling", m.inputAction)
+	if m.input.action != inputNewSibling {
+		t.Errorf("inputAction = %d, want inputNewSibling", m.input.action)
 	}
 }
 
@@ -277,8 +277,8 @@ func TestItemsAddChild(t *testing.T) {
 	if m.mode != modeInput {
 		t.Errorf("mode = %d, want modeInput", m.mode)
 	}
-	if m.inputAction != inputNewChild {
-		t.Errorf("inputAction = %d, want inputNewChild", m.inputAction)
+	if m.input.action != inputNewChild {
+		t.Errorf("inputAction = %d, want inputNewChild", m.input.action)
 	}
 }
 
@@ -288,8 +288,8 @@ func TestItemsEdit(t *testing.T) {
 	if m.mode != modeInput {
 		t.Errorf("mode = %d, want modeInput", m.mode)
 	}
-	if m.inputAction != inputEditItem {
-		t.Errorf("inputAction = %d, want inputEditItem", m.inputAction)
+	if m.input.action != inputEditItem {
+		t.Errorf("inputAction = %d, want inputEditItem", m.input.action)
 	}
 }
 
@@ -299,8 +299,8 @@ func TestItemsDelete(t *testing.T) {
 	if m.mode != modeConfirm {
 		t.Errorf("mode = %d, want modeConfirm", m.mode)
 	}
-	if m.confirmKind != confirmDeleteItem {
-		t.Errorf("confirmKind = %d, want confirmDeleteItem", m.confirmKind)
+	if m.confirm.kind != confirmDeleteItem {
+		t.Errorf("confirmKind = %d, want confirmDeleteItem", m.confirm.kind)
 	}
 }
 
@@ -310,8 +310,8 @@ func TestItemsDeadline(t *testing.T) {
 	if m.mode != modeInput {
 		t.Errorf("mode = %d, want modeInput", m.mode)
 	}
-	if m.inputAction != inputSetDeadline {
-		t.Errorf("inputAction = %d, want inputSetDeadline", m.inputAction)
+	if m.input.action != inputSetDeadline {
+		t.Errorf("inputAction = %d, want inputSetDeadline", m.input.action)
 	}
 }
 
@@ -331,10 +331,10 @@ func TestListPickerNavigation(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			m := newListPickerModel()
-			m.listCursor = tt.start
+			m.lp.cursor = tt.start
 			m = update(t, m, tt.msg)
-			if m.listCursor != tt.expect {
-				t.Errorf("cursor = %d, want %d", m.listCursor, tt.expect)
+			if m.lp.cursor != tt.expect {
+				t.Errorf("cursor = %d, want %d", m.lp.cursor, tt.expect)
 			}
 		})
 	}
@@ -354,8 +354,8 @@ func TestListPickerNewList(t *testing.T) {
 	if m.mode != modeInput {
 		t.Errorf("mode = %d, want modeInput", m.mode)
 	}
-	if m.inputAction != inputNewList {
-		t.Errorf("inputAction = %d, want inputNewList", m.inputAction)
+	if m.input.action != inputNewList {
+		t.Errorf("inputAction = %d, want inputNewList", m.input.action)
 	}
 }
 
@@ -365,8 +365,8 @@ func TestListPickerRename(t *testing.T) {
 	if m.mode != modeInput {
 		t.Errorf("mode = %d, want modeInput", m.mode)
 	}
-	if m.inputAction != inputRenameList {
-		t.Errorf("inputAction = %d, want inputRenameList", m.inputAction)
+	if m.input.action != inputRenameList {
+		t.Errorf("inputAction = %d, want inputRenameList", m.input.action)
 	}
 }
 
@@ -376,8 +376,8 @@ func TestListPickerDelete(t *testing.T) {
 	if m.mode != modeConfirm {
 		t.Errorf("mode = %d, want modeConfirm", m.mode)
 	}
-	if m.confirmKind != confirmDeleteList {
-		t.Errorf("confirmKind = %d, want confirmDeleteList", m.confirmKind)
+	if m.confirm.kind != confirmDeleteList {
+		t.Errorf("confirmKind = %d, want confirmDeleteList", m.confirm.kind)
 	}
 }
 
@@ -387,19 +387,19 @@ func TestListPickerQuickAdd(t *testing.T) {
 	if m.mode != modeInput {
 		t.Errorf("mode = %d, want modeInput", m.mode)
 	}
-	if m.inputAction != inputQuickAdd {
-		t.Errorf("inputAction = %d, want inputQuickAdd", m.inputAction)
+	if m.input.action != inputQuickAdd {
+		t.Errorf("inputAction = %d, want inputQuickAdd", m.input.action)
 	}
 }
 
 func TestWindowResizeClamp(t *testing.T) {
 	m := newTestModel()
-	m.itemCursor = 4 // last item in flat list
+	m.ib.cursor = 4 // last item in flat list
 
 	// Shrink to tiny window.
 	m = update(t, m, tea.WindowSizeMsg{Width: 40, Height: 10})
-	if m.itemCursor >= len(m.flat) {
-		t.Errorf("cursor %d should be < flat len %d", m.itemCursor, len(m.flat))
+	if m.ib.cursor >= len(m.ib.flat) {
+		t.Errorf("cursor %d should be < flat len %d", m.ib.cursor, len(m.ib.flat))
 	}
 }
 
@@ -448,15 +448,15 @@ func TestConfirmYes(t *testing.T) {
 	m := newTestModel()
 	m.prevMode = modeItems
 	m.mode = modeConfirm
-	m.confirmKind = confirmDeleteItem
-	m.confirmItemPath = []int{1} // "Second"
+	m.confirm.kind = confirmDeleteItem
+	m.confirm.itemPath = []int{1} // "Second"
 
 	m = update(t, m, key('y'))
 	if m.mode != modeItems {
 		t.Errorf("mode = %d, want modeItems", m.mode)
 	}
 	// "Second" should be removed.
-	for _, item := range m.list.Items {
+	for _, item := range m.ib.list.Items {
 		if item.Text == "Second" {
 			t.Error("Second should have been deleted")
 		}
@@ -467,15 +467,15 @@ func TestConfirmNo(t *testing.T) {
 	m := newTestModel()
 	m.prevMode = modeItems
 	m.mode = modeConfirm
-	m.confirmKind = confirmDeleteItem
-	m.confirmItemPath = []int{1}
-	before := len(m.list.Items)
+	m.confirm.kind = confirmDeleteItem
+	m.confirm.itemPath = []int{1}
+	before := len(m.ib.list.Items)
 
 	m = update(t, m, key('n'))
 	if m.mode != modeItems {
 		t.Errorf("mode = %d, want modeItems", m.mode)
 	}
-	if len(m.list.Items) != before {
+	if len(m.ib.list.Items) != before {
 		t.Error("nothing should be deleted on 'n'")
 	}
 }
@@ -484,8 +484,8 @@ func TestConfirmEsc(t *testing.T) {
 	m := newTestModel()
 	m.prevMode = modeItems
 	m.mode = modeConfirm
-	m.confirmKind = confirmDeleteItem
-	m.confirmItemPath = []int{1}
+	m.confirm.kind = confirmDeleteItem
+	m.confirm.itemPath = []int{1}
 
 	m = update(t, m, specialKey(tea.KeyEscape))
 	if m.mode != modeItems {
@@ -496,27 +496,27 @@ func TestConfirmEsc(t *testing.T) {
 func TestSearchFilter(t *testing.T) {
 	m := newTestModel()
 	m.mode = modeSearch
-	m.searchQuery = "child"
+	m.ib.searchQuery = "child"
 	m.rebuildFlat()
 
 	// Should only show Child A and Child B.
-	if len(m.flat) != 2 {
-		t.Errorf("expected 2 search results, got %d", len(m.flat))
+	if len(m.ib.flat) != 2 {
+		t.Errorf("expected 2 search results, got %d", len(m.ib.flat))
 	}
 }
 
 func TestSearchEscClears(t *testing.T) {
 	m := newTestModel()
 	m.mode = modeSearch
-	m.searchQuery = "child"
+	m.ib.searchQuery = "child"
 	m.rebuildFlat()
 
 	m = update(t, m, specialKey(tea.KeyEscape))
 	if m.mode != modeItems {
 		t.Errorf("mode = %d, want modeItems", m.mode)
 	}
-	if m.searchQuery != "" {
-		t.Errorf("searchQuery should be empty, got %q", m.searchQuery)
+	if m.ib.searchQuery != "" {
+		t.Errorf("searchQuery should be empty, got %q", m.ib.searchQuery)
 	}
 }
 
@@ -604,5 +604,51 @@ func TestSubtreeCount(t *testing.T) {
 	}
 	if done != 3 {
 		t.Errorf("done = %d, want 3", done)
+	}
+}
+
+func TestBasicClamp(t *testing.T) {
+	tests := []struct {
+		name                    string
+		cursor, scroll, visible int
+		want                    int
+	}{
+		{"cursor above scroll", 2, 5, 10, 2},
+		{"cursor below scroll", 15, 5, 10, 6},
+		{"cursor within window", 7, 5, 10, 5},
+		{"cursor at scroll", 5, 5, 10, 5},
+		{"cursor at end of window", 14, 5, 10, 5},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := basicClamp(tt.cursor, tt.scroll, tt.visible)
+			if got != tt.want {
+				t.Errorf("basicClamp(%d, %d, %d) = %d, want %d",
+					tt.cursor, tt.scroll, tt.visible, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestAdjustForArrows(t *testing.T) {
+	tests := []struct {
+		name                            string
+		cursor, scroll, visible, total  int
+		want                            int
+	}{
+		{"no overflow", 3, 0, 10, 10, 0},
+		{"cursor on top arrow", 5, 5, 10, 30, 4},
+		{"cursor on bottom arrow", 14, 5, 10, 30, 6},
+		{"cursor safe in middle", 8, 5, 10, 30, 5},
+		{"at very top", 0, 0, 10, 30, 0},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := adjustForArrows(tt.cursor, tt.scroll, tt.visible, tt.total)
+			if got != tt.want {
+				t.Errorf("adjustForArrows(%d, %d, %d, %d) = %d, want %d",
+					tt.cursor, tt.scroll, tt.visible, tt.total, got, tt.want)
+			}
+		})
 	}
 }

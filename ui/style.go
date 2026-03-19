@@ -4,6 +4,11 @@ import (
 	"charm.land/lipgloss/v2"
 )
 
+// Style vars are mutable package-level state. applyTheme is the sole writer,
+// called once at startup and on each theme change. This avoids threading a
+// style/theme context through every render method. Safe because bubbletea
+// dispatches Update/View on a single goroutine.
+
 // Nokia LCD-inspired monochrome green palette.
 var (
 	colorBgSelect  = lipgloss.Color("#1A2508")

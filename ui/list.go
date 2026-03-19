@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	tea "charm.land/bubbletea/v2"
-	"charm.land/lipgloss/v2"
 	"github.com/bitwisepossum/notch/todo"
 )
 
@@ -15,19 +14,19 @@ func (m Model) updateListPicker(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.MouseWheelMsg:
 		switch msg.Button {
 		case tea.MouseWheelDown:
-			m.listCursor = min(m.listCursor+1, len(m.lists)-1)
+			m.lp.cursor = min(m.lp.cursor+1, len(m.lp.lists)-1)
 		case tea.MouseWheelUp:
-			m.listCursor = max(m.listCursor-1, 0)
+			m.lp.cursor = max(m.lp.cursor-1, 0)
 		}
 	case tea.MouseClickMsg:
-		if msg.Button == tea.MouseLeft && len(m.lists) > 0 {
-			idx := m.listScroll + (msg.Y - headerLines)
-			if idx >= 0 && idx < len(m.lists) {
-				if idx == m.listCursor {
+		if msg.Button == tea.MouseLeft && len(m.lp.lists) > 0 {
+			idx := m.lp.scroll + (msg.Y - headerLines)
+			if idx >= 0 && idx < len(m.lp.lists) {
+				if idx == m.lp.cursor {
 					// Click on already-selected row → open
-					return m, m.openList(m.lists[m.listCursor].name)
+					return m, m.openList(m.lp.lists[m.lp.cursor].name)
 				}
-				m.listCursor = idx
+				m.lp.cursor = idx
 			}
 		}
 	case tea.KeyPressMsg:
@@ -35,57 +34,57 @@ func (m Model) updateListPicker(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "q":
 			return m, m.saveAndQuit
 		case "j", "down":
-			if m.listCursor < len(m.lists)-1 {
-				m.listCursor++
+			if m.lp.cursor < len(m.lp.lists)-1 {
+				m.lp.cursor++
 			}
 		case "k", "up":
-			if m.listCursor > 0 {
-				m.listCursor--
+			if m.lp.cursor > 0 {
+				m.lp.cursor--
 			}
 		case "pgdown", "shift+down":
-			m.listCursor = min(m.listCursor+m.halfPage(), len(m.lists)-1)
+			m.lp.cursor = min(m.lp.cursor+m.halfPage(), len(m.lp.lists)-1)
 		case "pgup", "shift+up":
-			m.listCursor = max(m.listCursor-m.halfPage(), 0)
+			m.lp.cursor = max(m.lp.cursor-m.halfPage(), 0)
 		case "enter":
-			if len(m.lists) > 0 {
-				return m, m.openList(m.lists[m.listCursor].name)
+			if len(m.lp.lists) > 0 {
+				return m, m.openList(m.lp.lists[m.lp.cursor].name)
 			}
 		case "s":
 			m.mode = modeSettings
 		case "r":
-			if len(m.lists) > 0 {
+			if len(m.lp.lists) > 0 {
 				m.prevMode = modeListPicker
 				m.mode = modeInput
-				m.inputAction = inputRenameList
-				m.textInput.SetValue(m.lists[m.listCursor].name)
-				return m, m.textInput.Focus()
+				m.input.action = inputRenameList
+				m.input.textInput.SetValue(m.lp.lists[m.lp.cursor].name)
+				return m, m.input.textInput.Focus()
 			}
 		case "n":
 			m.prevMode = modeListPicker
 			m.mode = modeInput
-			m.inputAction = inputNewList
-			m.textInput.SetValue("")
-			return m, m.textInput.Focus()
+			m.input.action = inputNewList
+			m.input.textInput.SetValue("")
+			return m, m.input.textInput.Focus()
 		case "a":
-			if len(m.lists) > 0 {
+			if len(m.lp.lists) > 0 {
 				m.prevMode = modeListPicker
 				m.mode = modeInput
-				m.inputAction = inputQuickAdd
-				m.textInput.SetValue("")
-				return m, m.textInput.Focus()
+				m.input.action = inputQuickAdd
+				m.input.textInput.SetValue("")
+				return m, m.input.textInput.Focus()
 			}
 		case "d":
-			if len(m.lists) > 0 {
-				name := m.lists[m.listCursor].name
+			if len(m.lp.lists) > 0 {
+				name := m.lp.lists[m.lp.cursor].name
 				m.prevMode = modeListPicker
 				m.mode = modeConfirm
-				m.confirmMsg = fmt.Sprintf("Delete list %q?", name)
-				m.confirmKind = confirmDeleteList
-				m.confirmTarget = name
+				m.confirm.msg = fmt.Sprintf("Delete list %q?", name)
+				m.confirm.kind = confirmDeleteList
+				m.confirm.target = name
 			}
 		}
 	}
-	m.listScroll = clampScroll(m.listCursor, m.listScroll, m.visibleRows(), len(m.lists))
+	m.lp.scroll = clampScroll(m.lp.cursor, m.lp.scroll, m.visibleRows(), len(m.lp.lists))
 	return m, nil
 }
 
@@ -93,20 +92,20 @@ func (m Model) updateListPicker(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m Model) viewListPicker() string {
 	var items strings.Builder
 
-	if len(m.lists) == 0 {
+	if len(m.lp.lists) == 0 {
 		items.WriteString(styleEmpty.Render("No lists yet. Press n to create one."))
 	} else {
 		visible := m.visibleRows()
-		end := min(m.listScroll+visible, len(m.lists))
+		end := min(m.lp.scroll+visible, len(m.lp.lists))
 		var lines []string
-		for i := m.listScroll; i < end; i++ {
-			e := m.lists[i]
+		for i := m.lp.scroll; i < end; i++ {
+			e := m.lp.lists[i]
 			count := ""
 			if e.totalItems > 0 {
 				count = " " + styleCount.Render(fmt.Sprintf("%d/%d", e.doneItems, e.totalItems))
 			}
 			var line string
-			if i == m.listCursor {
+			if i == m.lp.cursor {
 				line = styleSelected.Render("  " + e.name + count)
 			} else {
 				line = "  " + e.name + count
@@ -117,8 +116,8 @@ func (m Model) viewListPicker() string {
 		for len(lines) < visible {
 			lines = append(lines, "")
 		}
-		if total := len(m.lists); total > visible {
-			si := computeScroll(m.listScroll, total, visible)
+		if total := len(m.lp.lists); total > visible {
+			si := computeScroll(m.lp.scroll, total, visible)
 			lines = renderScrollbar(lines, si, m.panelWidth())
 		}
 		items.WriteString(strings.Join(lines, "\n"))
@@ -126,24 +125,19 @@ func (m Model) viewListPicker() string {
 
 	panel := stylePanel.Width(m.panelWidth()).Render(items.String())
 
-	var b strings.Builder
 	title := styleTitle.Render("NOTCH")
 	ver := styleHelpDesc.Render(" v" + todo.Version)
-	count := styleCount.Render(fmt.Sprintf("  (%d)", len(m.lists)))
-	b.WriteString(title + ver + count + "\n")
-	if m.showHelp {
-		help := lipgloss.NewStyle().PaddingTop(1).PaddingLeft(2).Render(renderHelp(listHelp, m.helpHeight()))
-		b.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, panel, help))
-	} else {
-		b.WriteString(panel)
-	}
+	count := styleCount.Render(fmt.Sprintf("  (%d)", len(m.lp.lists)))
+	titleLine := title + ver + count
+
 	hint := m.helpHint()
+	var statusBar string
 	if m.flashErr != "" {
-		b.WriteString("\n" + m.rightAlign(styleConfirm.Render(m.flashErr), hint))
+		statusBar = m.rightAlign(styleConfirm.Render(m.flashErr), hint)
 	} else if m.activeListDir != "" {
-		b.WriteString("\n" + m.rightAlign(styleHelpDesc.Render(m.activeListDir), hint))
+		statusBar = m.rightAlign(styleHelpDesc.Render(m.activeListDir), hint)
 	} else if hint != "" {
-		b.WriteString("\n" + m.rightAlign("", hint))
+		statusBar = m.rightAlign("", hint)
 	}
-	return b.String()
+	return m.layoutScreen(titleLine, panel, statusBar)
 }

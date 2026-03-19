@@ -29,7 +29,6 @@ package todo
 
 import (
 	"context"
-	"io"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -46,8 +45,7 @@ const (
 
 const (
 	logFileName = "notch.log"
-	maxLogSize  = 2 << 20 // 2 MB
-	pruneTarget = 1 << 20 // keep last 1 MB after pruning
+	maxLogSize = 2 << 20 // 2 MB
 )
 
 // logger is the package-level logger singleton.
@@ -225,42 +223,11 @@ func SanitizePath(p string) string {
 	return p
 }
 
-// pruneLog truncates the log at path if it exceeds maxLogSize, keeping the
-// last pruneTarget bytes aligned to the next newline boundary.
+// pruneLog truncates the log file to zero when it exceeds maxLogSize.
 func pruneLog(path string) {
 	info, err := os.Stat(path)
 	if err != nil || info.Size() <= maxLogSize {
 		return
 	}
-
-	f, err := os.OpenFile(path, os.O_RDWR, 0o600) // #nosec G304
-	if err != nil {
-		return
-	}
-	defer f.Close()
-
-	size := info.Size()
-	offset := max(size-pruneTarget, 0)
-
-	// Align to the next newline after offset so we don't split an entry.
-	buf := make([]byte, 4096)
-	n, err := f.ReadAt(buf, offset)
-	if err != nil && err != io.EOF {
-		return
-	}
-	nl := strings.Index(string(buf[:n]), "\n")
-	if nl >= 0 {
-		offset += int64(nl) + 1
-	}
-
-	tail := make([]byte, size-offset)
-	if _, err := f.ReadAt(tail, offset); err != nil && err != io.EOF {
-		return
-	}
-	if err := f.Truncate(0); err != nil {
-		return
-	}
-	if _, err := f.WriteAt(tail, 0); err != nil {
-		return
-	}
+	_ = os.Truncate(path, 0)
 }

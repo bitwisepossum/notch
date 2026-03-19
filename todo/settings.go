@@ -7,24 +7,15 @@ import (
 	"os"
 )
 
-// SavedFolds holds the persisted fold state for one list.
-type SavedFolds struct {
-	Hash  string   `json:"hash"`
-	Paths []string `json:"paths"` // index-based path keys ("0", "0,2", etc.)
-}
-
 // Settings holds user-configurable application settings.
 type Settings struct {
-	CustomDataDir string                `json:"custom_data_dir,omitempty"`
-	ActiveTheme   string                `json:"active_theme,omitempty"` // theme Key; empty = built-in default
-	FoldState     map[string]SavedFolds `json:"fold_state,omitempty"`   // list name → saved folds
-	CascadeDone   bool                  `json:"cascade_done,omitempty"` // marking done also marks all children
+	CustomDataDir string `json:"custom_data_dir,omitempty"`
+	ActiveTheme   string `json:"active_theme,omitempty"` // theme Key; empty = built-in default
+	CascadeDone   bool   `json:"cascade_done,omitempty"` // marking done also marks all children
 	// DeadlineFormat controls how deadlines are displayed and parsed in the UI.
 	// Deadlines are still persisted to list files as YYYY-MM-DD for portability.
 	// Empty means default (YYYY-MM-DD).
 	DeadlineFormat string `json:"deadline_format,omitempty"`
-	// ShowHelp controls sidebar visibility. Nil means "never set" (show on first start).
-	ShowHelp *bool `json:"show_help,omitempty"`
 	// LogLevel controls file logging. Empty or "off" disables logging.
 	// "minimal" logs errors only; "full" logs errors and user actions.
 	LogLevel string `json:"log_level,omitempty"`
@@ -90,14 +81,29 @@ func SaveSettings(s Settings) error {
 	return nil
 }
 
+var cachedListDir string
+
+// InvalidateListDir clears the cached list directory so that the next call
+// to ListDir re-resolves the path. Call this when CustomDataDir changes.
+func InvalidateListDir() { cachedListDir = "" }
+
 // ListDir returns the directory where list .md files are stored.
 // Uses CustomDataDir from settings if set and accessible; otherwise falls back to DataDir.
+// The result is cached; call InvalidateListDir to force a re-resolve.
 func ListDir() (string, error) {
+	if cachedListDir != "" {
+		return cachedListDir, nil
+	}
 	s, err := LoadSettings()
 	if err == nil && s.CustomDataDir != "" {
 		if mkErr := os.MkdirAll(s.CustomDataDir, 0o750); mkErr == nil {
-			return s.CustomDataDir, nil
+			cachedListDir = s.CustomDataDir
+			return cachedListDir, nil
 		}
 	}
-	return DataDir()
+	dir, err := DataDir()
+	if err == nil {
+		cachedListDir = dir
+	}
+	return dir, err
 }

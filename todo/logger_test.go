@@ -24,6 +24,7 @@ func tempHome(t *testing.T) (string, string) {
 	t.Helper()
 	tmp := t.TempDir()
 	t.Setenv("HOME", tmp)
+	InvalidateListDir()
 	dir, err := DataDir()
 	if err != nil {
 		t.Fatal(err)
@@ -74,7 +75,7 @@ func TestPruneLog_ExactlyAtThreshold_Unchanged(t *testing.T) {
 	}
 }
 
-func TestPruneLog_OversizeTrimsToTarget(t *testing.T) {
+func TestPruneLog_OversizeTruncatesToZero(t *testing.T) {
 	_, logPath := tempHome(t)
 
 	// 3 MB of 80-byte lines (79 'a's + newline).
@@ -83,69 +84,13 @@ func TestPruneLog_OversizeTrimsToTarget(t *testing.T) {
 	for buf.Len() < 3*(1<<20) {
 		buf.Write(line)
 	}
-	origSize := buf.Len()
 	writeLog(t, logPath, buf.Bytes())
 
 	pruneLog(logPath)
 
 	got := readLog(t, logPath)
-	if len(got) >= origSize {
-		t.Error("file was not pruned")
-	}
-	// Must be at most pruneTarget + one line (newline alignment slack).
-	if len(got) > pruneTarget+len(line) {
-		t.Errorf("file too large after prune: %d bytes (pruneTarget=%d)", len(got), pruneTarget)
-	}
-	// All retained lines must be intact (no mid-entry split at the start).
-	lines := strings.Split(strings.TrimRight(string(got), "\n"), "\n")
-	for i, l := range lines {
-		if len(l) != 79 {
-			t.Errorf("line %d: expected 79 chars, got %d (partial line retained)", i, len(l))
-			break
-		}
-	}
-}
-
-func TestPruneLog_AlignsToNewlineBoundary(t *testing.T) {
-	_, logPath := tempHome(t)
-
-	// 100-byte lines: 99 'x's + '\n'. Build slightly over maxLogSize so prune triggers.
-	line := []byte(strings.Repeat("x", 99) + "\n")
-	var buf bytes.Buffer
-	for buf.Len() <= maxLogSize {
-		buf.Write(line)
-	}
-	writeLog(t, logPath, buf.Bytes())
-
-	pruneLog(logPath)
-
-	got := readLog(t, logPath)
-	if len(got) >= buf.Len() {
-		t.Error("file was not pruned")
-	}
-	// Every retained line must be complete.
-	lines := strings.Split(strings.TrimRight(string(got), "\n"), "\n")
-	for i, l := range lines {
-		if len(l) != 99 {
-			t.Errorf("line %d: expected 99 chars, got %d — newline alignment failed", i, len(l))
-			break
-		}
-	}
-}
-
-func TestPruneLog_NoNewlineInTail_DoesNotPanic(t *testing.T) {
-	_, logPath := tempHome(t)
-
-	// File of all 'x' with no newlines, larger than maxLogSize.
-	data := bytes.Repeat([]byte("x"), maxLogSize+512)
-	writeLog(t, logPath, data)
-
-	// Must not panic; file should be smaller after.
-	pruneLog(logPath)
-
-	got := readLog(t, logPath)
-	if len(got) >= len(data) {
-		t.Error("file was not pruned")
+	if len(got) != 0 {
+		t.Errorf("expected empty file after prune, got %d bytes", len(got))
 	}
 }
 

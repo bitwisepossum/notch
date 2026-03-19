@@ -17,194 +17,214 @@ func (m Model) updateInput(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "enter":
-			val := strings.TrimSpace(m.textInput.Value())
-			m.inputErr = ""
+			val := strings.TrimSpace(m.input.textInput.Value())
+			m.input.err = ""
 			// inputSetDeadline allows empty val (clears the deadline).
-			if val != "" || m.inputAction == inputSetDeadline {
+			if val != "" || m.input.action == inputSetDeadline {
 				m.commitInput(val)
 			}
-			if m.inputErr == "" {
-				m.textInput.Blur()
+			if m.input.err == "" {
+				m.input.textInput.Blur()
 				m.mode = m.prevMode
 			}
 			return m, nil
 		case "esc":
-			m.inputErr = ""
-			m.textInput.Blur()
+			m.input.err = ""
+			m.input.textInput.Blur()
 			m.mode = m.prevMode
 			return m, nil
 		default:
 			// User typed something — clear any standing error.
-			m.inputErr = ""
+			m.input.err = ""
 		}
 	}
 
 	var cmd tea.Cmd
-	m.textInput, cmd = m.textInput.Update(msg)
+	m.input.textInput, cmd = m.input.textInput.Update(msg)
 	return m, cmd
 }
 
 // commitInput applies the submitted text value based on the active inputAction.
 func (m *Model) commitInput(val string) {
-	switch m.inputAction {
+	switch m.input.action {
 	case inputNewList:
-		if hasListNamed(m.lists, val) {
-			m.inputErr = "a list named " + val + " already exists"
-			return
-		}
-		// Create a new empty list file, then reload.
-		newList := &todo.List{Name: val}
-		m.setFlash(todo.Save(newList))
-		todo.LogEvent("list created", slog.String("name", val))
-		m.lists = loadListEntries()
-		// Move cursor to the new list.
-		for i, e := range m.lists {
-			if e.name == val {
-				m.listCursor = i
-				break
-			}
-		}
-
+		m.commitNewList(val)
 	case inputNewSibling:
-		todo.LogEvent("item added", slog.String("list", m.list.Name), slog.String("name", val))
-		m.pushUndo()
-		if len(m.flat) == 0 {
-			// Empty list — add top-level item.
-			m.list.Add(nil, val)
-		} else {
-			fi := m.flat[m.itemCursor]
-			parentPath := fi.path[:len(fi.path)-1]
-			// Insert after current item's index.
-			siblingIdx := fi.path[len(fi.path)-1] + 1
-			// Add at end then move into position.
-			m.list.Add(parentPath, val)
-
-			// The new item was appended at the end of parent's children.
-			// Move it to the correct position if needed.
-			parent := parentPath
-			items := m.list.Items
-			if len(parent) > 0 {
-				p := resolveItem(items, parent)
-				if p != nil {
-					items = p.Children
-				}
-			}
-			lastIdx := len(items) - 1
-			if lastIdx != siblingIdx {
-				from := make([]int, len(parent)+1)
-				copy(from, parent)
-				from[len(parent)] = lastIdx
-				to := make([]int, len(parent)+1)
-				copy(to, parent)
-				to[len(parent)] = siblingIdx
-				_ = m.list.Move(from, to)
-			}
-		}
-		m.saveFlash()
-		m.rebuildFlat()
-		// Move cursor to the new item.
-		m.itemCursor = min(m.itemCursor+1, len(m.flat)-1)
-
+		m.commitNewSibling(val)
 	case inputNewChild:
-		if len(m.flat) > 0 {
-			todo.LogEvent("item added", slog.String("list", m.list.Name), slog.String("name", val))
-			m.pushUndo()
-			fi := m.flat[m.itemCursor]
-			m.list.Add(fi.path, val)
-			newChild := fi.item.Children[len(fi.item.Children)-1]
-			m.saveFlash()
-			m.rebuildFlat()
-			m.followItem(newChild)
-		}
-
+		m.commitNewChild(val)
 	case inputEditItem:
-		if len(m.flat) > 0 {
-			todo.LogEvent("item edited", slog.String("list", m.list.Name), slog.String("name", val))
-			m.pushUndo()
-			fi := m.flat[m.itemCursor]
-			_ = m.list.Edit(fi.path, val)
-			m.saveFlash()
-			m.rebuildFlat()
-		}
-
+		m.commitEditItem(val)
 	case inputSetDataDir:
-		todo.LogEvent("data dir changed", slog.String("path", todo.SanitizePath(val)))
-		m.settings.CustomDataDir = val
-		m.setFlash(todo.SaveSettings(m.settings))
-		m.refreshListDir()
-		m.lists = loadListEntries()
-		m.listCursor = 0
-		m.listScroll = 0
-
+		m.commitSetDataDir(val)
 	case inputRenameList:
-		oldName := m.lists[m.listCursor].name
-		if oldName != val && hasListNamed(m.lists, val) {
-			m.inputErr = "a list named " + val + " already exists"
-			return
-		}
-		if oldName != val {
-			list, err := todo.Load(oldName)
-			if err != nil {
-				todo.LogError("load list for rename", slog.String("list", oldName), slog.String("err", err.Error()))
-				return
-			}
-			list.Rename(val)
-			if err := todo.Save(list); err != nil {
-				todo.LogError("save renamed list", slog.String("list", val), slog.String("err", err.Error()))
-				return
-			}
-			todo.LogEvent("list renamed", slog.String("from", oldName), slog.String("to", val))
-			m.setFlash(todo.Delete(oldName))
-			// Move any persisted fold state from old name to new name.
-			s := m.settings
-			if s.FoldState != nil {
-				if entry, ok := s.FoldState[oldName]; ok {
-					delete(s.FoldState, oldName)
-					s.FoldState[val] = entry
-					_ = todo.SaveSettings(s) // fold state only; non-critical
-					m.settings = s
-				}
-			}
-			m.lists = loadListEntries()
-			for i, e := range m.lists {
-				if e.name == val {
-					m.listCursor = i
-					break
-				}
-			}
-		}
-
+		m.commitRenameList(val)
 	case inputQuickAdd:
-		name := m.lists[m.listCursor].name
-		list, err := todo.Load(name)
-		if err != nil {
-			todo.LogError("load list for quick add", slog.String("list", name), slog.String("err", err.Error()))
-			return
-		}
-		list.Add(nil, val)
-		m.setFlash(todo.Save(list))
-
+		m.commitQuickAdd(val)
 	case inputSetDeadline:
-		if len(m.flat) == 0 {
+		m.commitSetDeadline(val)
+	}
+}
+
+func (m *Model) commitNewList(val string) {
+	if hasListNamed(m.lp.lists, val) {
+		m.input.err = "a list named " + val + " already exists"
+		return
+	}
+	newList := &todo.List{Name: val}
+	m.setFlash(todo.Save(newList))
+	todo.LogEvent("list created", slog.String("name", val))
+	m.lp.lists = loadListEntries()
+	for i, e := range m.lp.lists {
+		if e.name == val {
+			m.lp.cursor = i
+			break
+		}
+	}
+}
+
+func (m *Model) commitNewSibling(val string) {
+	todo.LogEvent("item added", slog.String("list", m.ib.list.Name), slog.String("name", val))
+	m.pushUndo()
+	if len(m.ib.flat) == 0 {
+		m.ib.list.Add(nil, val)
+	} else {
+		fi := m.ib.flat[m.ib.cursor]
+		parentPath := fi.path[:len(fi.path)-1]
+		siblingIdx := fi.path[len(fi.path)-1] + 1
+		m.ib.list.Add(parentPath, val)
+
+		parent := parentPath
+		items := m.ib.list.Items
+		if len(parent) > 0 {
+			p := resolveItem(items, parent)
+			if p != nil {
+				items = p.Children
+			}
+		}
+		lastIdx := len(items) - 1
+		if lastIdx != siblingIdx {
+			from := make([]int, len(parent)+1)
+			copy(from, parent)
+			from[len(parent)] = lastIdx
+			to := make([]int, len(parent)+1)
+			copy(to, parent)
+			to[len(parent)] = siblingIdx
+			_ = m.ib.list.Move(from, to)
+		}
+	}
+	m.saveFlash()
+	m.rebuildFlat()
+	m.ib.cursor = min(m.ib.cursor+1, len(m.ib.flat)-1)
+}
+
+func (m *Model) commitNewChild(val string) {
+	if len(m.ib.flat) == 0 {
+		return
+	}
+	todo.LogEvent("item added", slog.String("list", m.ib.list.Name), slog.String("name", val))
+	m.pushUndo()
+	fi := m.ib.flat[m.ib.cursor]
+	m.ib.list.Add(fi.path, val)
+	newChild := fi.item.Children[len(fi.item.Children)-1]
+	m.saveFlash()
+	m.rebuildFlat()
+	m.followItem(newChild)
+}
+
+func (m *Model) commitEditItem(val string) {
+	if len(m.ib.flat) == 0 {
+		return
+	}
+	todo.LogEvent("item edited", slog.String("list", m.ib.list.Name), slog.String("name", val))
+	m.pushUndo()
+	fi := m.ib.flat[m.ib.cursor]
+	_ = m.ib.list.Edit(fi.path, val)
+	m.saveFlash()
+	m.rebuildFlat()
+}
+
+func (m *Model) commitSetDataDir(val string) {
+	todo.LogEvent("data dir changed", slog.String("path", todo.SanitizePath(val)))
+	m.settings.CustomDataDir = val
+	m.setFlash(todo.SaveSettings(m.settings))
+	todo.InvalidateListDir()
+	m.refreshListDir()
+	m.lp.lists = loadListEntries()
+	m.lp.cursor = 0
+	m.lp.scroll = 0
+}
+
+func (m *Model) commitRenameList(val string) {
+	oldName := m.lp.lists[m.lp.cursor].name
+	if oldName != val && hasListNamed(m.lp.lists, val) {
+		m.input.err = "a list named " + val + " already exists"
+		return
+	}
+	if oldName == val {
+		return
+	}
+	list, err := todo.Load(oldName)
+	if err != nil {
+		todo.LogError("load list for rename", slog.String("list", oldName), slog.String("err", err.Error()))
+		return
+	}
+	list.Rename(val)
+	if err := todo.Save(list); err != nil {
+		todo.LogError("save renamed list", slog.String("list", val), slog.String("err", err.Error()))
+		return
+	}
+	todo.LogEvent("list renamed", slog.String("from", oldName), slog.String("to", val))
+	m.setFlash(todo.Delete(oldName))
+	us := m.uiState
+	if us.FoldState != nil {
+		if entry, ok := us.FoldState[oldName]; ok {
+			delete(us.FoldState, oldName)
+			us.FoldState[val] = entry
+			_ = saveUIState(us)
+			m.uiState = us
+		}
+	}
+	m.lp.lists = loadListEntries()
+	for i, e := range m.lp.lists {
+		if e.name == val {
+			m.lp.cursor = i
+			break
+		}
+	}
+}
+
+func (m *Model) commitQuickAdd(val string) {
+	name := m.lp.lists[m.lp.cursor].name
+	list, err := todo.Load(name)
+	if err != nil {
+		todo.LogError("load list for quick add", slog.String("list", name), slog.String("err", err.Error()))
+		return
+	}
+	list.Add(nil, val)
+	m.setFlash(todo.Save(list))
+}
+
+func (m *Model) commitSetDeadline(val string) {
+	if len(m.ib.flat) == 0 {
+		return
+	}
+	fi := m.ib.flat[m.ib.cursor]
+	m.pushUndo()
+	if val == "" {
+		_ = m.ib.list.SetDeadline(fi.path, time.Time{})
+		todo.LogEvent("deadline cleared", slog.String("list", m.ib.list.Name), slog.String("item", fi.item.Text))
+	} else {
+		d, err := time.Parse(deadlineLayout(m.settings), val)
+		if err != nil {
+			m.input.err = "use " + deadlineLabel(m.settings) + " (e.g. " + deadlineHint(m.settings) + ")"
 			return
 		}
-		fi := m.flat[m.itemCursor]
-		m.pushUndo()
-		if val == "" {
-			_ = m.list.SetDeadline(fi.path, time.Time{})
-			todo.LogEvent("deadline cleared", slog.String("list", m.list.Name), slog.String("item", fi.item.Text))
-		} else {
-			d, err := time.Parse(deadlineLayout(m.settings), val)
-			if err != nil {
-				m.inputErr = "use " + deadlineLabel(m.settings) + " (e.g. " + deadlineHint(m.settings) + ")"
-				return
-			}
-			_ = m.list.SetDeadline(fi.path, d)
-			todo.LogEvent("deadline set", slog.String("list", m.list.Name), slog.String("item", fi.item.Text), slog.String("deadline", val))
-		}
-		m.saveFlash()
-		m.rebuildFlat()
+		_ = m.ib.list.SetDeadline(fi.path, d)
+		todo.LogEvent("deadline set", slog.String("list", m.ib.list.Name), slog.String("item", fi.item.Text), slog.String("deadline", val))
 	}
+	m.saveFlash()
+	m.rebuildFlat()
 }
 
 // viewInput renders the underlying screen with the text input prompt below it.
@@ -236,7 +256,7 @@ func (m Model) viewInput() string {
 	b.WriteString("\n")
 
 	var prompt string
-	switch m.inputAction {
+	switch m.input.action {
 	case inputNewList:
 		prompt = "New list: "
 	case inputNewSibling:
@@ -252,13 +272,13 @@ func (m Model) viewInput() string {
 	case inputSetDeadline:
 		prompt = "Deadline (" + deadlineLabel(m.settings) + ", empty=clear): "
 	case inputQuickAdd:
-		prompt = "Add to " + m.lists[m.listCursor].name + ": "
+		prompt = "Add to " + m.lp.lists[m.lp.cursor].name + ": "
 	}
 	errStr := ""
-	if m.inputErr != "" {
-		errStr = "   " + styleConfirm.Render(m.inputErr)
+	if m.input.err != "" {
+		errStr = "   " + styleConfirm.Render(m.input.err)
 	}
-	b.WriteString(stylePrompt.Render(prompt) + m.textInput.View() + errStr + "\n")
+	b.WriteString(stylePrompt.Render(prompt) + m.input.textInput.View() + errStr + "\n")
 	b.WriteString(renderHelp(inputHelp, 0))
 	return b.String()
 }
@@ -269,42 +289,42 @@ func (m Model) updateConfirm(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "y":
-			switch m.confirmKind {
+			switch m.confirm.kind {
 			case confirmClearLog:
 				m.setFlash(todo.ClearLog())
-				m.logLines = nil
-				m.logCursor = 0
+				m.log.lines = nil
+				m.log.cursor = 0
 				m.mode = m.prevMode
 				return m, nil
 			case confirmDeleteList:
-				todo.LogEvent("list deleted", slog.String("name", m.confirmTarget))
-				m.setFlash(todo.Delete(m.confirmTarget))
+				todo.LogEvent("list deleted", slog.String("name", m.confirm.target))
+				m.setFlash(todo.Delete(m.confirm.target))
 				// Remove any persisted fold state for the deleted list.
-				s := m.settings
-				if s.FoldState != nil {
-					if _, ok := s.FoldState[m.confirmTarget]; ok {
-						delete(s.FoldState, m.confirmTarget)
-						_ = todo.SaveSettings(s) // fold state only; non-critical
-						m.settings = s
+				us := m.uiState
+				if us.FoldState != nil {
+					if _, ok := us.FoldState[m.confirm.target]; ok {
+						delete(us.FoldState, m.confirm.target)
+						_ = saveUIState(us) // fold state only; non-critical
+						m.uiState = us
 					}
 				}
-				m.lists = loadListEntries()
-				if m.listCursor >= len(m.lists) && m.listCursor > 0 {
-					m.listCursor = len(m.lists) - 1
+				m.lp.lists = loadListEntries()
+				if m.lp.cursor >= len(m.lp.lists) && m.lp.cursor > 0 {
+					m.lp.cursor = len(m.lp.lists) - 1
 				}
 			case confirmDeleteItem:
-				if len(m.flat) > 0 {
-					fi := m.flat[m.itemCursor]
-					todo.LogEvent("item deleted", slog.String("list", m.list.Name), slog.String("name", fi.item.Text))
+				if len(m.ib.flat) > 0 {
+					fi := m.ib.flat[m.ib.cursor]
+					todo.LogEvent("item deleted", slog.String("list", m.ib.list.Name), slog.String("name", fi.item.Text))
 				}
 				m.pushUndo()
 				saved := m.snapshotFoldedItems()
-				_ = m.list.Remove(m.confirmItemPath)
+				_ = m.ib.list.Remove(m.confirm.itemPath)
 				m.rebuildFoldedFromPointers(saved)
 				m.saveFlash()
 				m.rebuildFlat()
-				if m.itemCursor >= len(m.flat) && m.itemCursor > 0 {
-					m.itemCursor = len(m.flat) - 1
+				if m.ib.cursor >= len(m.ib.flat) && m.ib.cursor > 0 {
+					m.ib.cursor = len(m.ib.flat) - 1
 				}
 			}
 			m.mode = m.prevMode
@@ -333,7 +353,7 @@ func (m Model) viewConfirm() string {
 		styleFrame.Render(underlying))
 
 	// Build popup.
-	msg := styleConfirm.Render(m.confirmMsg)
+	msg := styleConfirm.Render(m.confirm.msg)
 	hint := styleHelpKey.Render("y") + styleHelpDesc.Render("  /  ") + styleHelpKey.Render("n")
 	innerWidth := max(lipgloss.Width(msg), lipgloss.Width(hint))
 	popup := stylePanel.Width(innerWidth).Render(msg + "\n\n" + hint)
